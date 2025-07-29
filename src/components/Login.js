@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { FaSignInAlt, FaUserPlus, FaSignOutAlt, FaGoogle, FaFacebook } from 'react-icons/fa';
@@ -7,6 +7,37 @@ import HuluxLogo from '../Hulux.jpg';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Login = ({ user, onLogin, onLogout }) => {
+  // Login con Google
+  const handleGoogleLogin = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      if (onLogin) onLogin();
+      navigate('/');
+    } catch (err) {
+      setError('Error con Google: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Login con Facebook
+  const handleFacebookLogin = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const provider = new FacebookAuthProvider();
+      await signInWithPopup(auth, provider);
+      if (onLogin) onLogin();
+      navigate('/');
+    } catch (err) {
+      setError('Error con Facebook: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -103,8 +134,26 @@ const Login = ({ user, onLogin, onLogout }) => {
             <div className="text-center">
               <small className="text-muted">O ingresa con</small>
               <div className="d-flex justify-content-center mt-2 gap-3">
-                <FaGoogle style={{ fontSize: '1.5rem', cursor: 'pointer' }} />
-                <FaFacebook style={{ fontSize: '1.5rem', cursor: 'pointer' }} />
+                <button
+                  type="button"
+                  className="btn btn-outline-danger d-flex align-items-center justify-content-center"
+                  style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  aria-label="Iniciar sesión con Google"
+                >
+                  <FaGoogle style={{ fontSize: '1.5rem' }} />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary d-flex align-items-center justify-content-center"
+                  style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
+                  onClick={handleFacebookLogin}
+                  disabled={isLoading}
+                  aria-label="Iniciar sesión con Facebook"
+                >
+                  <FaFacebook style={{ fontSize: '1.5rem' }} />
+                </button>
               </div>
             </div>
           </form>
