@@ -11,7 +11,11 @@ const Navigation = ({ user, onLogout }) => {
           <span className="text-danger ms-1">&reg;</span>
         </NavLink>
 
-        <div className="collapse navbar-collapse justify-content-end">
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        <div className="collapse navbar-collapse justify-content-end" id="mainNavbar">
           <ul className="navbar-nav">
             {!user ? (
               <li className="nav-item">

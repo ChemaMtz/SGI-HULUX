@@ -1,0 +1,17 @@
+/* Ajustes para tablas y formularios en pantallas pequeñas */
+@media (max-width: 576px) {
+  .table, .table th, .table td {
+    font-size: 0.85rem;
+    padding: 0.25rem;
+  }
+  .form-control, .btn, .form-label {
+    font-size: 0.95rem;
+  }
+  .card {
+    padding: 0.5rem;
+  }
+  .container, .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
