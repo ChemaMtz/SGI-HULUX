@@ -75,7 +75,12 @@ const MaterialTable = () => {
           </thead>
           <tbody>
             {registros.length > 0 ? (
-              registros.map(r => (
+              [...registros].sort((a, b) => {
+                // Extraer número de orden como número, ignorando prefijos como 'ORD-' si existen
+                const numA = parseInt((a.numero_orden || '').replace(/\D/g, '')) || 0;
+                const numB = parseInt((b.numero_orden || '').replace(/\D/g, '')) || 0;
+                return numA - numB;
+              }).map(r => (
                 <tr key={r.id}>
                   <td>{r.numero_orden || '-'}</td>
                   <td>{r.fecha || '-'}</td>

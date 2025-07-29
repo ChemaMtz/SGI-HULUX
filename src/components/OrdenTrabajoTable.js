@@ -108,7 +108,12 @@ const OrdenTrabajoTable = () => {
           </thead>
           <tbody>
             {ordenes.length > 0 ? (
-              ordenes.map((o) => (
+              [...ordenes].sort((a, b) => {
+                // Ordenar por número, asegurando que sea numérico
+                const numA = parseInt(a.numero || a.numero_orden || 0);
+                const numB = parseInt(b.numero || b.numero_orden || 0);
+                return numA - numB;
+              }).map((o) => (
                 <tr key={o.id}>
                   <td>{o.numero || 'N/A'}</td>
                   <td>{o.fecha || 'N/A'}</td>
