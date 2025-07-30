@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaSignInAlt, FaUserPlus, FaSignOutAlt, FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaSignInAlt, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
 import HuluxLogo from '../Hulux.jpg';
+import GoogleLogo from '../assets/Google.png';
+import FacebookLogo from '../assets/Facebook.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Login = ({ user, onLogin, onLogout }) => {
@@ -142,7 +144,7 @@ const Login = ({ user, onLogin, onLogout }) => {
                   disabled={isLoading}
                   aria-label="Iniciar sesión con Google"
                 >
-                  <FaGoogle style={{ fontSize: '1.5rem' }} />
+                  <img src={GoogleLogo} alt="Google" style={{ width: '20px', height: '20px' }} />
                 </button>
                 <button
                   type="button"
@@ -152,7 +154,7 @@ const Login = ({ user, onLogin, onLogout }) => {
                   disabled={isLoading}
                   aria-label="Iniciar sesión con Facebook"
                 >
-                  <FaFacebook style={{ fontSize: '1.5rem' }} />
+                  <img src={FacebookLogo} alt="Facebook" style={{ width: '40px', height: '25px' }} />
                 </button>
               </div>
             </div>
