@@ -71,7 +71,7 @@ const Login = ({ user, onLogin, onLogout }) => {
     <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-dark text-light">
       <div className="card shadow w-100" style={{ maxWidth: '450px' }}>
         <div className="card-header text-center bg-light">
-          <img src={HuluxLogo} alt="Logo Hulux" style={{ height: '80px', objectFit: 'contain' }} />
+          <img src={HuluxLogo} alt="Logo Hulux" style={{ height: '80px', objectFit: 'contain', borderRadius: '50%' }} />
         </div>
 
         {user ? (
