@@ -1,3 +1,4 @@
+// Importaciones necesarias: React, estilos, rutas y componentes
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import './responsive.css';
@@ -13,10 +14,13 @@ import { auth } from './firebase/firebaseConfig';
 import Navigation from './components/Navigation';
 import { signOut } from 'firebase/auth';
 
+// Componente principal que maneja la navegación y autenticación
 const AppContent = () => {
+  // Estado para el usuario autenticado
   const [user, setUser] = useState(null);
   const location = useLocation();
 
+  // Escuchar cambios en el estado de autenticación
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(u => {
       setUser(u);
@@ -24,46 +28,55 @@ const AppContent = () => {
     return () => unsubscribe();
   }, []);
 
+  // Función para cerrar sesión
   const handleLogout = async () => {
     await signOut(auth);
     setUser(null);
   };
 
+  // Rutas donde no se debe mostrar la barra de navegación
   const hideNavbarRoutes = ['/login'];
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
     <div className="app-container">
+      {/* Mostrar navegación solo en rutas específicas */}
       {shouldShowNavbar && <Navigation user={user} onLogout={handleLogout} />}
       
       <main className="main-content">
         <Routes>
+          {/* Ruta pública - Login */}
           <Route path="/login" element={<Login />} />
 
+          {/* Ruta protegida - Página principal */}
           <Route path="/" element={
             <ProtectedRoute user={user}>
               <Home />
             </ProtectedRoute>
           } />
 
+          {/* Ruta protegida - Devolución de materiales */}
           <Route path="/devolucion" element={
             <ProtectedRoute user={user}>
               <Devolucion />
             </ProtectedRoute>
           } />
 
+          {/* Ruta protegida - Órdenes de trabajo */}
           <Route path="/orden-trabajo" element={
             <ProtectedRoute user={user}>
               <OrdenTrabajo />
             </ProtectedRoute>
           } />
 
+          {/* Ruta protegida solo para admin - Panel administrativo */}
           <Route path="/admin-panel" element={
             <ProtectedRoute user={user} adminOnly>
               <AdminPanel />
             </ProtectedRoute>
           } />
 
+          {/* Ruta 404 - Página no encontrada */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -71,6 +84,7 @@ const AppContent = () => {
   );
 };
 
+// Componente App principal que envuelve todo en el Router
 function App() {
   return (
     <Router>
