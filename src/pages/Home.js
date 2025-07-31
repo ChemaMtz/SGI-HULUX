@@ -53,43 +53,43 @@ const Home = () => {
       <div className="container py-5">
         {/* Sección de bienvenida principal */}
         <div className="home-welcome text-center">
-          <h1 className="display-5 fw-bold">Bienvenido al Sistema de Gestión Integral</h1>
+          <h1 className="display-5 fw-bold">Bienvenido al Sistema HULUX®</h1>
           <p className="lead mt-3">
-            Administra y controla todos los procesos de tu organización desde un solo lugar
+            Gestión integral de órdenes de trabajo y devolución de materiales para operaciones de fibra óptica
           </p>
         </div>
 
         {/* Grid de características del sistema */}
         <div className="row g-4">
-          {/* Card 1: Reportes en Tiempo Real */}
+          {/* Card 1: Órdenes de Trabajo */}
           <div className="col-md-4">
             <div className="feature-card text-center">
-              <div className="feature-icon">📊</div>
-              <h5>Reportes en Tiempo Real</h5>
+              <div className="feature-icon">🔧</div>
+              <h5>Órdenes de Trabajo</h5>
               <p>
-                Accede a métricas y análisis actualizados de todos tus procesos operativos.
+                Crea y gestiona órdenes de trabajo externas/internas con numeración automática y firmas digitales.
               </p>
             </div>
           </div>
 
-          {/* Card 2: Seguridad Garantizada */}
+          {/* Card 2: Devolución de Materiales */}
           <div className="col-md-4">
             <div className="feature-card text-center">
-              <div className="feature-icon">🔒</div>
-              <h5>Seguridad Garantizada</h5>
+              <div className="feature-icon">📦</div>
+              <h5>Devolución de Materiales</h5>
               <p>
-                Protección de datos con los más altos estándares de seguridad informática.
+                Registra devoluciones de equipos ONU, modems, cables y accesorios con control de inventario.
               </p>
             </div>
           </div>
 
-          {/* Card 3: Sincronización Automática */}
+          {/* Card 3: Reportes y PDFs */}
           <div className="col-md-4">
             <div className="feature-card text-center">
-              <div className="feature-icon">🔄</div>
-              <h5>Sincronización Automática</h5>
+              <div className="feature-icon">📄</div>
+              <h5>Reportes y PDFs</h5>
               <p>
-                Todos tus dispositivos actualizados con la información más reciente.
+                Genera reportes detallados con firmas digitales y trazabilidad completa de usuarios.
               </p>
             </div>
           </div>
