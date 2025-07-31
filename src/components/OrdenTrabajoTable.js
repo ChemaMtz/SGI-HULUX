@@ -109,6 +109,9 @@ const OrdenTrabajoTable = () => {
       ['Cantidad Efectivo', orden.cantidadEfectivo || 'N/A'],
       ['Actividades', (orden.actividades || []).join(', ') || 'Sin actividades'],
       ['Materiales', (orden.materiales || []).map(m => `${m.cantidad} - ${m.descripcion}`).join('\n') || 'Sin materiales'],
+      ['Creado por', orden.creadoPor ? `${orden.creadoPor.nombreCompleto} (${orden.creadoPor.email})` : 'Sin información'],
+      ['Fecha de creación', orden.creadoPor && orden.creadoPor.fechaCreacion ? 
+        (orden.creadoPor.fechaCreacion.toDate ? orden.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : orden.creadoPor.fechaCreacion.toString()) : 'N/A'],
     ];
 
     // Generar tabla principal con autoTable
@@ -176,6 +179,7 @@ const OrdenTrabajoTable = () => {
               <th>Auxiliares</th>
               <th>Uso Efectivo</th>
               <th>Cantidad Efectivo</th>
+              <th>Creado Por</th>
               <th>PDF</th>
             </tr>
           </thead>
@@ -223,6 +227,23 @@ const OrdenTrabajoTable = () => {
                   <td>{o.usoEfectivo || 'N/A'}</td>
                   <td>{o.cantidadEfectivo || 'N/A'}</td>
                   
+                  {/* Información del usuario que creó la orden */}
+                  <td>
+                    {o.creadoPor ? (
+                      <div>
+                        <strong>{o.creadoPor.nombreCompleto}</strong><br/>
+                        <small className="text-muted">{o.creadoPor.email}</small><br/>
+                        <small className="text-muted">
+                          {o.creadoPor.fechaCreacion && o.creadoPor.fechaCreacion.toDate ? 
+                            o.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : 
+                            'N/A'}
+                        </small>
+                      </div>
+                    ) : (
+                      <em className="text-muted">Sin información</em>
+                    )}
+                  </td>
+                  
                   {/* Botón para generar y descargar PDF */}
                   <td>
                     <button
@@ -237,7 +258,7 @@ const OrdenTrabajoTable = () => {
             ) : (
               // Si no hay órdenes, mostrar mensaje informativo
               <tr>
-                <td colSpan="12" className="empty-state">
+                <td colSpan="13" className="empty-state">
                   📋 No hay órdenes de trabajo registradas
                 </td>
               </tr>

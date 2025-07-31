@@ -1,7 +1,7 @@
 // Importaciones necesarias: React, Firebase Firestore
 import React, { useState } from 'react';
-import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db, auth } from '../firebase/firebaseConfig';
+import { collection, runTransaction, doc } from 'firebase/firestore';
 
 // Estado inicial del formulario de devolución
 const initialState = {
@@ -53,28 +53,80 @@ const DevolucionMaterial = () => {
     }));
   };
 
-  // Enviar formulario y guardar en Firebase
+  // Enviar formulario y guardar en Firebase con numeración única
   const handleSubmit = async e => {
     e.preventDefault();
     setMsg('');
 
     try {
-      // Obtener el siguiente número de orden automáticamente
-      const snapshot = await getDocs(collection(db, 'devolucionesMaterial'));
-      const nuevoNumero = snapshot.size + 1;
-      const numeroOrden = `ORD-${String(nuevoNumero).padStart(3, '0')}`;
+      // Usar transacción para garantizar numeración única
+      const numeroOrden = await runTransaction(db, async (transaction) => {
+        // Crear referencia al documento contador
+        const contadorRef = doc(db, 'contadores', 'devolucionesMaterial');
+        
+        try {
+          // Intentar obtener el contador actual
+          const contadorDoc = await transaction.get(contadorRef);
+          
+          let siguienteNumero;
+          if (!contadorDoc.exists()) {
+            // Si no existe el contador, crearlo con valor inicial
+            siguienteNumero = 1;
+            transaction.set(contadorRef, { ultimo: siguienteNumero });
+          } else {
+            // Si existe, incrementar el contador
+            siguienteNumero = contadorDoc.data().ultimo + 1;
+            transaction.update(contadorRef, { ultimo: siguienteNumero });
+          }
 
-      // Guardar registro en Firestore
-      await addDoc(collection(db, 'devolucionesMaterial'), {
-        ...form,
-        numero_orden: numeroOrden,
+          // Crear número de orden formateado
+          const numeroOrdenFormateado = `ORD-${String(siguienteNumero).padStart(3, '0')}`;
+
+          // Obtener información del usuario actual
+          const usuario = auth.currentUser;
+          const infoUsuario = usuario ? {
+            uid: usuario.uid,
+            email: usuario.email,
+            nombreCompleto: usuario.displayName || usuario.email,
+            fechaCreacion: new Date(),
+          } : {
+            uid: 'anonimo',
+            email: 'no-disponible',
+            nombreCompleto: 'Usuario Anónimo',
+            fechaCreacion: new Date(),
+          };
+
+          // Crear referencia para el nuevo documento
+          const nuevaDevolucionRef = doc(collection(db, 'devolucionesMaterial'));
+          
+          // Guardar la devolución con el número garantizado
+          transaction.set(nuevaDevolucionRef, {
+            ...form,
+            numero_orden: numeroOrdenFormateado,
+            creadoPor: infoUsuario, // Información del usuario que creó la devolución
+          });
+
+          return numeroOrdenFormateado;
+        } catch (error) {
+          console.error("Error en transacción:", error);
+          throw error;
+        }
       });
 
-      alert(`Orden guardada correctamente: ${numeroOrden}`);
+      alert(`¡Orden guardada correctamente: ${numeroOrden}!`);
       setMsg('Registro guardado exitosamente');
       setForm(initialState); // Resetear formulario
+      
     } catch (err) {
-      setMsg(`Error al guardar: ${err.message}`);
+      console.error("Error completo:", err);
+      
+      if (err.code === 'aborted') {
+        setMsg('Error: La transacción fue cancelada. Por favor, intente nuevamente.');
+      } else if (err.code === 'unavailable') {
+        setMsg('Error: Servicio no disponible. Verifique su conexión a internet.');
+      } else {
+        setMsg(`Error al guardar: ${err.message}`);
+      }
     }
   };
 

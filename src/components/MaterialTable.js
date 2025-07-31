@@ -73,6 +73,9 @@ const MaterialTable = () => {
       ['POE', r.poe ? 'Sí' : 'No'],
       ['Batería', r.bateria ? 'Sí' : 'No'],
       ['Observaciones', r.observaciones || 'Sin observaciones'],
+      ['Creado por', r.creadoPor ? `${r.creadoPor.nombreCompleto} (${r.creadoPor.email})` : 'Sin información'],
+      ['Fecha de creación', r.creadoPor && r.creadoPor.fechaCreacion ? 
+        (r.creadoPor.fechaCreacion.toDate ? r.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : r.creadoPor.fechaCreacion.toString()) : 'N/A'],
     ];
 
     // Generar tabla automática en el PDF
@@ -114,6 +117,7 @@ const MaterialTable = () => {
               <th>POE</th>
               <th>Batería</th>
               <th>Observaciones</th>
+              <th>Creado Por</th>
               <th>PDF</th>
             </tr>
           </thead>
@@ -150,6 +154,24 @@ const MaterialTable = () => {
                   
                   {/* Observaciones y botón de descarga PDF */}
                   <td><em>{r.observaciones || 'Sin observaciones'}</em></td>
+                  
+                  {/* Información del usuario que creó la devolución */}
+                  <td>
+                    {r.creadoPor ? (
+                      <div>
+                        <strong>{r.creadoPor.nombreCompleto}</strong><br/>
+                        <small className="text-muted">{r.creadoPor.email}</small><br/>
+                        <small className="text-muted">
+                          {r.creadoPor.fechaCreacion && r.creadoPor.fechaCreacion.toDate ? 
+                            r.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : 
+                            'N/A'}
+                        </small>
+                      </div>
+                    ) : (
+                      <em className="text-muted">Sin información</em>
+                    )}
+                  </td>
+                  
                   <td>
                     {/* Botón para generar y descargar PDF del registro */}
                     <button className="btn btn-download" onClick={() => generarPDF(r)}>
@@ -161,7 +183,7 @@ const MaterialTable = () => {
             ) : (
               // Si no hay registros, mostrar mensaje informativo
               <tr>
-                <td colSpan="16" className="empty-state">
+                <td colSpan="17" className="empty-state">
                   📝 No hay registros de devolución disponibles
                 </td>
               </tr>

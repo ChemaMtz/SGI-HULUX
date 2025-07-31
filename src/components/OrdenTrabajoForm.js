@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react"; // React hooks para estado y efectos
 import { ToastContainer, toast } from "react-toastify"; // Notificaciones toast
 import "react-toastify/dist/ReactToastify.css"; // Estilos para las notificaciones
-import { db } from "../firebase/firebaseConfig"; // Configuración de Firebase
-import { collection, addDoc, onSnapshot } from "firebase/firestore"; // Funciones de Firestore
+import { db, auth } from "../firebase/firebaseConfig"; // Configuración de Firebase
+import { collection, onSnapshot, runTransaction, doc } from "firebase/firestore"; // Funciones de Firestore
 import SignaturePad from "../components/SignaturePad"; // Componente personalizado para firmas
 import "bootstrap/dist/css/bootstrap.min.css"; // Framework CSS Bootstrap
 
@@ -168,10 +168,11 @@ const OrdenTrabajo = () => {
    * Proceso completo de guardado:
    * 1. Prevenir comportamiento por defecto
    * 2. Procesar actividades seleccionadas
-   * 3. Guardar en Firebase con numeración automática
-   * 4. Mostrar feedback al usuario
-   * 5. Resetear formulario en caso de éxito
-   * 6. Manejo de errores con alertas
+   * 3. Usar transacción para obtener número único
+   * 4. Guardar en Firebase con numeración garantizada
+   * 5. Mostrar feedback al usuario
+   * 6. Resetear formulario en caso de éxito
+   * 7. Manejo de errores con alertas
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -186,15 +187,60 @@ const OrdenTrabajo = () => {
       if (formData.actividades.otros && formData.actividades.otrosTexto)
         acts.push(formData.actividades.otrosTexto);
 
-      // Guardar en Firebase con numeración automática
-      await addDoc(collection(db, "ordenesTrabajo"), {
-        ...formData,
-        actividades: acts, // Array procesado de actividades
-        numero: numeroOrdenActual, // Número de orden calculado
+      // Usar transacción para garantizar numeración única
+      await runTransaction(db, async (transaction) => {
+        // Crear referencia al documento contador
+        const contadorRef = doc(db, 'contadores', 'ordenesTrabajo');
+        
+        try {
+          // Intentar obtener el contador actual
+          const contadorDoc = await transaction.get(contadorRef);
+          
+          let siguienteNumero;
+          if (!contadorDoc.exists()) {
+            // Si no existe el contador, crearlo con valor inicial
+            siguienteNumero = 1;
+            transaction.set(contadorRef, { ultimo: siguienteNumero });
+          } else {
+            // Si existe, incrementar el contador
+            siguienteNumero = contadorDoc.data().ultimo + 1;
+            transaction.update(contadorRef, { ultimo: siguienteNumero });
+          }
+
+          // Obtener información del usuario actual
+          const usuario = auth.currentUser;
+          const infoUsuario = usuario ? {
+            uid: usuario.uid,
+            email: usuario.email,
+            nombreCompleto: usuario.displayName || usuario.email,
+            fechaCreacion: new Date(),
+          } : {
+            uid: 'anonimo',
+            email: 'no-disponible',
+            nombreCompleto: 'Usuario Anónimo',
+            fechaCreacion: new Date(),
+          };
+
+          // Crear referencia para el nuevo documento
+          const nuevaOrdenRef = doc(collection(db, "ordenesTrabajo"));
+          
+          // Guardar la orden con el número garantizado
+          transaction.set(nuevaOrdenRef, {
+            ...formData,
+            actividades: acts, // Array procesado de actividades
+            numero: siguienteNumero, // Número único garantizado
+            creadoPor: infoUsuario, // Información del usuario que creó la orden
+          });
+
+          return siguienteNumero;
+        } catch (error) {
+          console.error("Error en transacción:", error);
+          throw error;
+        }
       });
 
       // Feedback de éxito
-      alert("Orden guardada exitosamente!");
+      alert("¡Orden guardada exitosamente!");
       
       // Resetear formulario a estado inicial
       setFormData({
@@ -202,13 +248,13 @@ const OrdenTrabajo = () => {
         hora: "",
         destino: "",
         actividades: {
-          instalaciones: false,
-          corteFO: false,
-          cambioFO: false,
-          soporteTecnico: false,
-          retiroCancelacion: false,
-          otros: false,
-          otrosTexto: "",
+          Instalaciones: false,
+          CorteFO: false,
+          CambioFO: false,
+          SoporteTecnico: false,
+          RetiroCancelacion: false,
+          Otros: false,
+          OtrosTexto: "",
         },
         materiales: [{ cantidad: "", descripcion: "" }],
         conduce: "",
@@ -218,10 +264,26 @@ const OrdenTrabajo = () => {
         cantidadEfectivo: "",
         firmas: { reviso: "", autorizo: "", solicito: "" },
       });
+      
+      // Restablecer fecha y hora actuales
+      const today = new Date();
+      setFormData((prev) => ({
+        ...prev,
+        fecha: today.toLocaleDateString("es-ES"),
+        hora: today.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }),
+      }));
+      
     } catch (err) {
-      // Manejo de errores
-      console.error(err);
-      alert("Error al guardar la orden: " + err.message);
+      // Manejo de errores específicos
+      console.error("Error completo:", err);
+      
+      if (err.code === 'aborted') {
+        alert("Error: La transacción fue cancelada. Por favor, intente nuevamente.");
+      } else if (err.code === 'unavailable') {
+        alert("Error: Servicio no disponible. Verifique su conexión a internet.");
+      } else {
+        alert("Error al guardar la orden: " + err.message);
+      }
     }
   };
 
