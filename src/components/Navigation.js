@@ -1,7 +1,7 @@
 // Importaciones necesarias para el componente de navegación
 import React from 'react'; // React para crear el componente
 import { NavLink } from 'react-router-dom'; // NavLink para navegación con estilos activos
-import { FaSignInAlt, FaExchangeAlt, FaClipboardList, FaUserCog, FaSignOutAlt } from 'react-icons/fa'; // Iconos de Font Awesome
+import { FaSignInAlt, FaExchangeAlt, FaClipboardList, FaUserCog, FaSignOutAlt, FaHome } from 'react-icons/fa'; // Iconos de Font Awesome
 
 /**
  * Componente Navigation
@@ -23,11 +23,11 @@ import { FaSignInAlt, FaExchangeAlt, FaClipboardList, FaUserCog, FaSignOutAlt } 
 const Navigation = ({ user, onLogout }) => {
   return (
     // Navbar principal con Bootstrap - sticky top para mantener fija en scroll
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+    <nav className="navbar navbar-expand-lg navbar-dark sticky-top shadow">
       <div className="container">
         {/* Brand/Logo de la aplicación */}
         <NavLink to="/" className="navbar-brand d-flex align-items-center">
-          <span className="text-primary fw-bold fs-4">hulux</span>
+          <span className="text-primary fw-bold">Hulux</span>
           <span className="text-danger ms-1">&reg;</span>
         </NavLink>
 
@@ -43,23 +43,30 @@ const Navigation = ({ user, onLogout }) => {
             {!user ? (
               // Si el usuario NO está autenticado, mostrar solo enlace de login
               <li className="nav-item">
-                <NavLink to="/login" className={({ isActive }) => `nav-link ${isActive ? 'active bg-primary text-white rounded px-3' : ''}`}>
+                <NavLink to="/login" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                   <FaSignInAlt className="me-2" /> Iniciar sesión
                 </NavLink>
               </li>
             ) : (
               // Si el usuario SÍ está autenticado, mostrar menú completo
               <>
+                {/* Enlace a página de inicio */}
+                <li className="nav-item">
+                  <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <FaHome className="me-2" /> Inicio
+                  </NavLink>
+                </li>
+                
                 {/* Enlace a página de devoluciones */}
                 <li className="nav-item">
-                  <NavLink to="/devolucion" className={({ isActive }) => `nav-link ${isActive ? 'active bg-primary text-white rounded px-3' : ''}`}>
+                  <NavLink to="/devolucion" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <FaExchangeAlt className="me-2" /> Devoluciones
                   </NavLink>
                 </li>
                 
                 {/* Enlace a página de órdenes de trabajo */}
                 <li className="nav-item">
-                  <NavLink to="/orden-trabajo" className={({ isActive }) => `nav-link ${isActive ? 'active bg-primary text-white rounded px-3' : ''}`}>
+                  <NavLink to="/orden-trabajo" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <FaClipboardList className="me-2" /> Órdenes
                   </NavLink>
                 </li>
@@ -67,7 +74,7 @@ const Navigation = ({ user, onLogout }) => {
                 {/* Panel de administración - solo visible para admin@hulux.com */}
                 {user.email === 'admin@hulux.com' && (
                   <li className="nav-item">
-                    <NavLink to="/admin-panel" className={({ isActive }) => `nav-link ${isActive ? 'active bg-primary text-white rounded px-3' : ''}`}>
+                    <NavLink to="/admin-panel" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                       <FaUserCog className="me-2" /> Registros
                     </NavLink>
                   </li>
@@ -77,7 +84,7 @@ const Navigation = ({ user, onLogout }) => {
                 <li className="nav-item">
                   <button
                     onClick={onLogout}
-                    className="btn btn-outline-danger ms-3 d-flex align-items-center"
+                    className="btn btn-logout ms-3 d-flex align-items-center text-white"
                   >
                     <FaSignOutAlt className="me-2" /> Cerrar sesión
                   </button>

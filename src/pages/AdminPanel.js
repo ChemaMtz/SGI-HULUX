@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'; // Hook para navegación program
 import { auth } from '../firebase/firebaseConfig'; // Autenticación de Firebase
 import MaterialTable from '../components/MaterialTable'; // Tabla de devoluciones de materiales
 import OrdenTrabajoTable from '../components/OrdenTrabajoTable'; // Tabla de órdenes de trabajo
+import '../App.css'; // Importar estilos
 
 // Constante para el email del administrador autorizado
 const ADMIN_EMAIL = 'admin@hulux.com'; // Email específico con permisos de administrador
@@ -60,63 +61,31 @@ const AdminPanel = () => {
   // Renderizado condicional: no mostrar nada mientras se verifica permisos
   if (!isAdmin) return null;
 
-  // Estilos personalizados para el panel de administración
-  const styles = {
-    // Contenedor principal con diseño centrado
-    wrapper: {
-      maxWidth: '1200px', // Ancho máximo para mantener legibilidad
-      margin: '0 auto', // Centrado horizontal
-      padding: '2rem', 
-      backgroundColor: '#f9f9f9', // Fondo gris claro
-      minHeight: '100vh', // Altura mínima completa
-    },
-    
-    // Tarjetas para organizar las secciones
-    card: {
-      background: '#ffffff', // Fondo blanco para contraste
-      borderRadius: '12px', // Bordes redondeados modernos
-      padding: '2rem',
-      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.05)', // Sombra sutil
-      marginBottom: '2rem', // Espaciado entre tarjetas
-    },
-    
-    // Título principal del panel
-    title: {
-      textAlign: 'center',
-      fontSize: '2rem',
-      color: '#2c3e50', // Color azul oscuro profesional
-      marginBottom: '2rem',
-      fontWeight: '600', // Peso de fuente semi-bold
-    },
-    
-    // Títulos de las secciones
-    // Títulos de las secciones
-    sectionTitle: {
-      fontSize: '1.4rem',
-      color: '#34495e', // Color gris azulado
-      marginBottom: '1rem',
-      borderBottom: '2px solid #3498db', // Línea inferior azul
-      paddingBottom: '0.5rem', // Espaciado para la línea
-    },
-  };
-
   return (
-    <div style={styles.wrapper}>
-      {/* Título principal del panel */}
-      <h2 style={styles.title}>Panel de Administración</h2>
+    <div className="admin-container">
+      <div className="admin-wrapper">
+        {/* Título principal del panel */}
+        <h1 className="admin-title">
+          🛠️ Panel de Administración
+        </h1>
 
-      {/* Sección de Devolución de Materiales */}
-      <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>Devolución de Materiales</h3>
-        {/* Tabla completa con todas las devoluciones registradas */}
-        <MaterialTable />
-      </div>
+        {/* Sección de Devolución de Materiales */}
+        <div className="admin-card">
+          <h2 className="admin-section-title">
+            📦 Devolución de Materiales
+          </h2>
+          {/* Tabla completa con todas las devoluciones registradas */}
+          <MaterialTable />
+        </div>
 
-      {/* Sección de Órdenes de Trabajo */}
-      <div style={styles.card}>
-        <h3 style={styles.sectionTitle}>Órdenes de Trabajo</h3>
-        {/* Tabla completa con todas las órdenes registradas */}
-        <OrdenTrabajoTable />
+        {/* Sección de Órdenes de Trabajo */}
+        <div className="admin-card">
+          <h2 className="admin-section-title">
+            📋 Órdenes de Trabajo
+          </h2>
+          {/* Tabla completa con todas las órdenes registradas */}
+          <OrdenTrabajoTable />
+        </div>
       </div>
     </div>
   );

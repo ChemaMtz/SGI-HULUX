@@ -1,6 +1,7 @@
 // Importaciones necesarias para el componente de firma digital
 import React, { useRef, useEffect } from 'react'; // React hooks para referencias y efectos
 import SignaturePad from 'signature_pad'; // Librería externa para captura de firmas
+import '../App.css'; // Importar estilos personalizados
 
 /**
  * Componente SignaturePadComponent
@@ -28,9 +29,14 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
   // Efecto para inicializar el SignaturePad y configurar responsive behavior
   useEffect(() => {
     if (canvasRef.current) {
-      // Crear instancia de SignaturePad con configuración básica
+      // Crear instancia de SignaturePad con configuración personalizada
       signaturePad.current = new SignaturePad(canvasRef.current, {
-        penColor: 'black' // Color de la tinta
+        penColor: '#2c3e50', // Color corporativo para la tinta
+        backgroundColor: 'rgba(255,255,255,0)', // Fondo transparente
+        minWidth: 1, // Grosor mínimo de línea
+        maxWidth: 3, // Grosor máximo de línea
+        velocityFilterWeight: 0.7, // Suavizado de líneas
+        throttle: 16 // Optimización de rendimiento (60fps)
       });
       
       /**
@@ -95,57 +101,31 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
   };
 
   return (
-    <div>
-      {/* Canvas para captura de firma con estilos responsive */}
+    <div className="signature-container">
+      {/* Canvas para captura de firma con estilos modernos */}
       <canvas
         ref={canvasRef}
-        style={{
-          width: '100%', // Ancho responsive
-          maxWidth: '400px', // Límite máximo de ancho
-          height: '150px', // Altura fija para consistencia
-          border: '1px solid #000', // Borde negro para definir área
-          display: 'block', // Display block para centrado
-          margin: '0 auto 10px auto', // Centrado horizontal con margen inferior
-          background: '#fff', // Fondo blanco para contraste
-        }}
+        className="signature-canvas"
       />
       
-      {/* Contenedor de botones centrados */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-        {/* Botón de guardar con estilos Bootstrap-like */}
+      {/* Contenedor de botones con estilos modernos */}
+      <div className="signature-buttons">
+        {/* Botón de guardar con gradiente verde */}
         <button
           type="button"
           onClick={handleSave}
-          style={{
-            padding: '6px 18px',
-            background: '#198754', // Verde Bootstrap success
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)' // Sombra sutil
-          }}
+          className="btn btn-signature-save"
         >
-          Guardar
+          💾 Guardar
         </button>
         
-        {/* Botón de limpiar con estilos Bootstrap-like */}
+        {/* Botón de limpiar con gradiente rojo */}
         <button
           type="button"
           onClick={handleClear}
-          style={{
-            padding: '6px 18px',
-            background: '#dc3545', // Rojo Bootstrap danger
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)' // Sombra sutil
-          }}
+          className="btn btn-signature-clear"
         >
-          Limpiar
+          🗑️ Limpiar
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
 import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para escuchar cambios en tiempo real
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
+import '../App.css'; // Importar estilos
 
 /**
  * Componente MaterialTable
@@ -88,15 +89,15 @@ const MaterialTable = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="table-container">
       {/* Título principal de la tabla */}
-      <h3 className="text-center text-primary mb-4">Registros de Devolución de Materiales</h3>
+      <h3 className="table-title">📦 Registros de Devolución de Materiales</h3>
 
       {/* Contenedor responsive para la tabla */}
       <div className="table-responsive">
-        <table className="table table-bordered table-hover align-middle text-center">
+        <table className="table custom-table table-hover align-middle text-center">
           {/* Encabezado de la tabla con estilos Bootstrap */}
-          <thead className="table-dark">
+          <thead>
             <tr>
               <th># Orden</th>
               <th>Fecha</th>
@@ -130,29 +131,29 @@ const MaterialTable = () => {
                 // Renderizar cada registro como una fila
                 <tr key={r.id}>
                   {/* Información básica del registro */}
-                  <td>{r.numero_orden || '-'}</td>
+                  <td><strong>{r.numero_orden || '-'}</strong></td>
                   <td>{r.fecha || '-'}</td>
                   <td>{r.cliente || '-'}</td>
                   <td>{r.actividad || '-'}</td>
                   <td>{r.modelo_onu_funcional || '-'}</td>
                   
                   {/* Materiales devueltos - Mostrar checkmark (✓) si está marcado */}
-                  <td>{r.onu_rip ? '✓' : '-'}</td>
-                  <td>{r.modem_funcional ? '✓' : '-'}</td>
-                  <td>{r.modem_rip ? '✓' : '-'}</td>
-                  <td>{r.cable_ethernet ? '✓' : '-'}</td>
-                  <td>{r.roseta ? '✓' : '-'}</td>
-                  <td>{r.drop ? '✓' : '-'}</td>
-                  <td>{r.cargador ? '✓' : '-'}</td>
-                  <td>{r.poe ? '✓' : '-'}</td>
-                  <td>{r.bateria ? '✓' : '-'}</td>
+                  <td>{r.onu_rip ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.modem_funcional ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.modem_rip ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.cable_ethernet ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.roseta ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.drop ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.cargador ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.poe ? <span className="checkmark">✓</span> : '-'}</td>
+                  <td>{r.bateria ? <span className="checkmark">✓</span> : '-'}</td>
                   
                   {/* Observaciones y botón de descarga PDF */}
-                  <td>{r.observaciones || 'Sin observaciones'}</td>
+                  <td><em>{r.observaciones || 'Sin observaciones'}</em></td>
                   <td>
                     {/* Botón para generar y descargar PDF del registro */}
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => generarPDF(r)}>
-                      Descargar
+                    <button className="btn btn-download" onClick={() => generarPDF(r)}>
+                      📄 Descargar
                     </button>
                   </td>
                 </tr>
@@ -160,7 +161,9 @@ const MaterialTable = () => {
             ) : (
               // Si no hay registros, mostrar mensaje informativo
               <tr>
-                <td colSpan="16">No hay registros de devolución</td>
+                <td colSpan="16" className="empty-state">
+                  📝 No hay registros de devolución disponibles
+                </td>
               </tr>
             )}
           </tbody>

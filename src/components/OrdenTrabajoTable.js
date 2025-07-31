@@ -4,6 +4,7 @@ import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
 import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para tiempo real
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
+import '../App.css'; // Importar estilos
 
 /**
  * Componente OrdenTrabajoTable
@@ -154,15 +155,15 @@ const OrdenTrabajoTable = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="table-container">
       {/* Título principal de la tabla */}
-      <h3 className="text-center text-success mb-4">Órdenes de Trabajo</h3>
+      <h3 className="table-title">📋 Órdenes de Trabajo</h3>
 
       {/* Contenedor responsive para la tabla */}
       <div className="table-responsive">
-        <table className="table table-bordered table-hover align-middle text-center">
+        <table className="table custom-table table-hover align-middle text-center">
           {/* Encabezado de la tabla con estilos Bootstrap */}
-          <thead className="table-success">
+          <thead>
             <tr>
               <th>Número</th>
               <th>Fecha</th>
@@ -192,15 +193,17 @@ const OrdenTrabajoTable = () => {
                 // Renderizar cada orden como una fila
                 <tr key={o.id}>
                   {/* Información básica de la orden */}
-                  <td>{o.numero || 'N/A'}</td>
+                  <td><strong>{o.numero || 'N/A'}</strong></td>
                   <td>{o.fecha || 'N/A'}</td>
                   <td>{o.hora || 'N/A'}</td>
                   <td>{o.destino || 'N/A'}</td>
                   
                   {/* Actividades - Renderizado condicional de array */}
-                  <td>{Array.isArray(o.actividades) && o.actividades.length > 0
-                    ? o.actividades.join(', ')
-                    : <em className="text-muted">Sin actividades</em>}</td>
+                  <td>
+                    {Array.isArray(o.actividades) && o.actividades.length > 0
+                      ? o.actividades.join(', ')
+                      : <em className="text-muted">Sin actividades</em>}
+                  </td>
                   
                   {/* Materiales - Renderizado complejo de array de objetos */}
                   <td>
@@ -223,10 +226,10 @@ const OrdenTrabajoTable = () => {
                   {/* Botón para generar y descargar PDF */}
                   <td>
                     <button
-                      className="btn btn-sm btn-outline-success"
+                      className="btn btn-download-success"
                       onClick={() => generarPDF(o)}
                     >
-                      Descargar
+                      📄 Descargar
                     </button>
                   </td>
                 </tr>
@@ -234,8 +237,8 @@ const OrdenTrabajoTable = () => {
             ) : (
               // Si no hay órdenes, mostrar mensaje informativo
               <tr>
-                <td colSpan="12" className="text-center text-muted">
-                  No hay órdenes de trabajo registradas
+                <td colSpan="12" className="empty-state">
+                  📋 No hay órdenes de trabajo registradas
                 </td>
               </tr>
             )}

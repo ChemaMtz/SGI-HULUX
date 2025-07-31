@@ -92,76 +92,131 @@ const DevolucionMaterial = () => {
   ];
 
   return (
-    <div className="container py-4">
-      <h2 className="text-center mb-4">Devolución de Material</h2>
+    <div className="page-container">
+      <div className="container">
+        <div className="form-container">
+          <h2 className="form-title">📦 Devolución de Material</h2>
 
-      {/* Formulario de devolución */}
-      <form onSubmit={handleSubmit} className="bg-light p-4 rounded shadow">
-        {/* Campo de fecha */}
-        <div className="mb-3">
-          <label htmlFor="fecha" className="form-label">Fecha:</label>
-          <input type="date" className="form-control" id="fecha" name="fecha" value={form.fecha} onChange={handleChange} required />
-        </div>
-
-        {/* Campo de cliente */}
-        <div className="mb-3">
-          <label htmlFor="cliente" className="form-label">Cliente:</label>
-          <input type="text" className="form-control" id="cliente" name="cliente" placeholder="Nombre del cliente" value={form.cliente} onChange={handleChange} required />
-        </div>
-
-        {/* Campo de actividad */}
-        <div className="mb-3">
-          <label htmlFor="actividad" className="form-label">Actividad:</label>
-          <input type="text" className="form-control" id="actividad" name="actividad" placeholder="Descripción de la actividad" value={form.actividad} onChange={handleChange} />
-        </div>
-
-        {/* Selector de modelo ONU */}
-        <div className="mb-3">
-          <label htmlFor="modelo_onu_funcional" className="form-label">Modelo de ONU:</label>
-          <select className="form-select" id="modelo_onu_funcional" name="modelo_onu_funcional" value={form.modelo_onu_funcional} onChange={handleChange} required>
-            <option value="">-- Selecciona un modelo --</option>
-            {modelosONU.map((modelo, i) => (
-              <option key={i} value={modelo}>{modelo}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Sección de materiales devueltos con checkboxes */}
-        <h5 className="mt-4">Materiales devueltos:</h5>
-        <div className="row">
-          {materiales.map((material, index) => (
-            <div key={index} className="col-md-4 mb-2">
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id={material.name}
-                  name={material.name}
-                  checked={form[material.name]}
-                  onChange={handleChange}
+          {/* Formulario de devolución */}
+          <form onSubmit={handleSubmit}>
+            {/* Información básica */}
+            <div className="row">
+              {/* Campo de fecha */}
+              <div className="col-md-6 mb-3">
+                <label htmlFor="fecha" className="form-label">📅 Fecha:</label>
+                <input 
+                  type="date" 
+                  className="form-control" 
+                  id="fecha" 
+                  name="fecha" 
+                  value={form.fecha} 
+                  onChange={handleChange} 
+                  required 
                 />
-                <label className="form-check-label" htmlFor={material.name}>{material.label}</label>
+              </div>
+
+              {/* Campo de cliente */}
+              <div className="col-md-6 mb-3">
+                <label htmlFor="cliente" className="form-label">👤 Cliente:</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  id="cliente" 
+                  name="cliente" 
+                  placeholder="Nombre del cliente" 
+                  value={form.cliente} 
+                  onChange={handleChange} 
+                  required 
+                />
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Campo de observaciones */}
-        <div className="mb-3 mt-3">
-          <label htmlFor="observaciones" className="form-label">Observaciones:</label>
-          <textarea className="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Notas adicionales..." value={form.observaciones} onChange={handleChange}></textarea>
-        </div>
+            {/* Campo de actividad */}
+            <div className="mb-3">
+              <label htmlFor="actividad" className="form-label">🔧 Actividad:</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="actividad" 
+                name="actividad" 
+                placeholder="Descripción de la actividad" 
+                value={form.actividad} 
+                onChange={handleChange} 
+              />
+            </div>
 
-        {/* Botón de envío */}
-        <button type="submit" className="btn btn-success w-100">Guardar Devolución</button>
-      </form>
+            {/* Selector de modelo ONU */}
+            <div className="mb-4">
+              <label htmlFor="modelo_onu_funcional" className="form-label">📡 Modelo de ONU:</label>
+              <select 
+                className="form-select" 
+                id="modelo_onu_funcional" 
+                name="modelo_onu_funcional" 
+                value={form.modelo_onu_funcional} 
+                onChange={handleChange} 
+                required
+              >
+                <option value="">-- Selecciona un modelo --</option>
+                {modelosONU.map((modelo, i) => (
+                  <option key={i} value={modelo}>{modelo}</option>
+                ))}
+              </select>
+            </div>
 
-      {/* Mensaje de confirmación o error */}
-      {msg && (
-        <div className={`alert mt-3 ${msg.includes('Error') ? 'alert-danger' : 'alert-success'}`} role="alert">
-          {msg}
+            {/* Sección de materiales devueltos con checkboxes */}
+            <h5 className="form-section-title">📋 Materiales devueltos</h5>
+            <div className="materials-grid">
+              <div className="row">
+                {materiales.map((material, index) => (
+                  <div key={index} className="col-md-4 col-sm-6 mb-3">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={material.name}
+                        name={material.name}
+                        checked={form[material.name]}
+                        onChange={handleChange}
+                      />
+                      <label className="form-check-label" htmlFor={material.name}>
+                        {material.label}
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Campo de observaciones */}
+            <div className="mb-4">
+              <label htmlFor="observaciones" className="form-label">📝 Observaciones:</label>
+              <textarea 
+                className="form-control" 
+                id="observaciones" 
+                name="observaciones" 
+                rows="4" 
+                placeholder="Notas adicionales, estado del material, comentarios..." 
+                value={form.observaciones} 
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Botón de envío */}
+            <div className="text-center">
+              <button type="submit" className="btn btn-primary-custom">
+                💾 Guardar Devolución
+              </button>
+            </div>
+          </form>
+
+          {/* Mensaje de confirmación o error */}
+          {msg && (
+            <div className={`alert alert-custom ${msg.includes('Error') ? 'alert-danger' : 'alert-success'}`} role="alert">
+              {msg}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
