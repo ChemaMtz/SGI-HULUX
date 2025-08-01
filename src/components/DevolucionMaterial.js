@@ -8,33 +8,35 @@ const initialState = {
   fecha: '',
   cliente: '',
   actividad: '',
-  modelo_onu_funcional: '',
-  onu_rip: false,
-  modem_funcional: false,
-  modem_rip: false,
-  cable_ethernet: false,
-  roseta: false,
-  drop: false,
-  cargador: false,
-  poe: false,
-  bateria: false,
+  onu_rip: 0,
+  onu_rip_modelo: '',
+  modem_funcional: 0,
+  modem_funcional_modelo: '',
+  modem_rip: 0,
+  modem_rip_modelo: '',
+  cable_ethernet: 0,
+  roseta: 0,
+  drop: 0,
+  cargador: 0,
+  poe: 0,
+  bateria: 0,
   observaciones: '',
 };
 
-// Lista de modelos de ONU disponibles para selección
-const modelosONU = [
+// Lista de modelos de equipos disponibles para selección
+const modelosEquipos = [
   'HG8145V5V3',
   'HG8145V5- NUE-TV',
   'HG8145V5- NUE',
   'HG8145X6',
   'HG8245Q2',
-  'HG8145V5- DEV.',
-  'hg8245q2 nuevo',
+  'HG8145V5- DEV',
+  'HG8245Q2 nuevo',
   'HG323AC-B',
   'OptiXstar-HG8145X6',
   'HG323ACT Onu Vsol CATV',
   'V2802W-U-AZUL',
-  'V2801SG-51 DEV.',
+  'V2801SG-51 DEV',
   'RWireless-G1',
 ];
 
@@ -46,10 +48,10 @@ const DevolucionMaterial = () => {
 
   // Manejar cambios en los inputs del formulario
   const handleChange = e => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'number' ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -132,15 +134,15 @@ const DevolucionMaterial = () => {
 
   // Lista de materiales disponibles para devolución
   const materiales = [
-    { name: 'onu_rip', label: 'ONU RIP' },
-    { name: 'modem_funcional', label: 'Modem Funcional' },
-    { name: 'modem_rip', label: 'Modem RIP' },
-    { name: 'cable_ethernet', label: 'Cable Ethernet' },
-    { name: 'roseta', label: 'Roseta' },
-    { name: 'drop', label: 'Drop' },
-    { name: 'cargador', label: 'Cargador' },
-    { name: 'poe', label: 'POE' },
-    { name: 'bateria', label: 'Batería' },
+    { name: 'onu_rip', label: 'ONU RIP', icon: '📡', requiereModelo: true },
+    { name: 'modem_funcional', label: 'Modem Funcional', icon: '📶', requiereModelo: true },
+    { name: 'modem_rip', label: 'Modem RIP', icon: '📵', requiereModelo: true },
+    { name: 'cable_ethernet', label: 'Cable Ethernet', icon: '🔌', requiereModelo: false },
+    { name: 'roseta', label: 'Roseta', icon: '🔧', requiereModelo: false },
+    { name: 'drop', label: 'Drop', icon: '📏', requiereModelo: false },
+    { name: 'cargador', label: 'Cargador', icon: '🔋', requiereModelo: false },
+    { name: 'poe', label: 'POE', icon: '⚡', requiereModelo: false },
+    { name: 'bateria', label: 'Batería', icon: '🔋', requiereModelo: false },
   ];
 
   return (
@@ -197,42 +199,45 @@ const DevolucionMaterial = () => {
               />
             </div>
 
-            {/* Selector de modelo ONU */}
-            <div className="mb-4">
-              <label htmlFor="modelo_onu_funcional" className="form-label">📡 Modelo de ONU:</label>
-              <select 
-                className="form-select" 
-                id="modelo_onu_funcional" 
-                name="modelo_onu_funcional" 
-                value={form.modelo_onu_funcional} 
-                onChange={handleChange} 
-                required
-              >
-                <option value="">-- Selecciona un modelo --</option>
-                {modelosONU.map((modelo, i) => (
-                  <option key={i} value={modelo}>{modelo}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sección de materiales devueltos con checkboxes */}
-            <h5 className="form-section-title">📋 Materiales devueltos</h5>
+            {/* Sección de materiales devueltos con cantidades */}
+            <h5 className="form-section-title">📋 Materiales devueltos (Cantidades)</h5>
             <div className="materials-grid">
               <div className="row">
                 {materiales.map((material, index) => (
                   <div key={index} className="col-md-4 col-sm-6 mb-3">
-                    <div className="form-check">
+                    <div className="material-quantity-input">
+                      <label className="form-label material-label" htmlFor={material.name}>
+                        {material.icon} {material.label}
+                      </label>
                       <input
-                        type="checkbox"
-                        className="form-check-input"
+                        type="number"
+                        className="form-control"
                         id={material.name}
                         name={material.name}
-                        checked={form[material.name]}
+                        min="0"
+                        max="99"
+                        value={form[material.name]}
                         onChange={handleChange}
+                        placeholder="0"
                       />
-                      <label className="form-check-label" htmlFor={material.name}>
-                        {material.label}
-                      </label>
+                      
+                      {/* Selector de modelo condicional */}
+                      {material.requiereModelo && form[material.name] > 0 && (
+                        <div className="mt-2">
+                          <select 
+                            className="form-select form-select-sm" 
+                            name={`${material.name}_modelo`}
+                            value={form[`${material.name}_modelo`] || ''}
+                            onChange={handleChange}
+                            required={form[material.name] > 0}
+                          >
+                            <option value="">-- Selecciona modelo --</option>
+                            {modelosEquipos.map((modelo, i) => (
+                              <option key={i} value={modelo}>{modelo}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

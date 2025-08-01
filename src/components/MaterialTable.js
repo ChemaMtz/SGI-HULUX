@@ -62,16 +62,15 @@ const MaterialTable = () => {
       ['Fecha', r.fecha || '-'],
       ['Cliente', r.cliente || '-'],
       ['Actividad', r.actividad || '-'],
-      ['Modelo de ONU', r.modelo_onu_funcional || '-'],
-      ['ONU RIP', r.onu_rip ? 'Sí' : 'No'],
-      ['Modem Funcional', r.modem_funcional ? 'Sí' : 'No'],
-      ['Modem RIP', r.modem_rip ? 'Sí' : 'No'],
-      ['Cable Ethernet', r.cable_ethernet ? 'Sí' : 'No'],
-      ['Roseta', r.roseta ? 'Sí' : 'No'],
-      ['Drop', r.drop ? 'Sí' : 'No'],
-      ['Cargador', r.cargador ? 'Sí' : 'No'],
-      ['POE', r.poe ? 'Sí' : 'No'],
-      ['Batería', r.bateria ? 'Sí' : 'No'],
+      ['ONU RIP', r.onu_rip > 0 ? `${r.onu_rip} unidades${r.onu_rip_modelo ? ` - Modelo: ${r.onu_rip_modelo}` : ''}` : '0'],
+      ['Modem Funcional', r.modem_funcional > 0 ? `${r.modem_funcional} unidades${r.modem_funcional_modelo ? ` - Modelo: ${r.modem_funcional_modelo}` : ''}` : '0'],
+      ['Modem RIP', r.modem_rip > 0 ? `${r.modem_rip} unidades${r.modem_rip_modelo ? ` - Modelo: ${r.modem_rip_modelo}` : ''}` : '0'],
+      ['Cable Ethernet', r.cable_ethernet > 0 ? `${r.cable_ethernet} unidades` : '0'],
+      ['Roseta', r.roseta > 0 ? `${r.roseta} unidades` : '0'],
+      ['Drop', r.drop > 0 ? `${r.drop} unidades` : '0'],
+      ['Cargador', r.cargador > 0 ? `${r.cargador} unidades` : '0'],
+      ['POE', r.poe > 0 ? `${r.poe} unidades` : '0'],
+      ['Batería', r.bateria > 0 ? `${r.bateria} unidades` : '0'],
       ['Observaciones', r.observaciones || 'Sin observaciones'],
       ['Creado por', r.creadoPor ? `${r.creadoPor.nombreCompleto} (${r.creadoPor.email})` : 'Sin información'],
       ['Fecha de creación', r.creadoPor && r.creadoPor.fechaCreacion ? 
@@ -106,7 +105,6 @@ const MaterialTable = () => {
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Actividad</th>
-              <th>Modelo ONU</th>
               <th>ONU RIP</th>
               <th>Modem Func.</th>
               <th>Modem RIP</th>
@@ -139,18 +137,38 @@ const MaterialTable = () => {
                   <td>{r.fecha || '-'}</td>
                   <td>{r.cliente || '-'}</td>
                   <td>{r.actividad || '-'}</td>
-                  <td>{r.modelo_onu_funcional || '-'}</td>
                   
-                  {/* Materiales devueltos - Mostrar checkmark (✓) si está marcado */}
-                  <td>{r.onu_rip ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.modem_funcional ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.modem_rip ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.cable_ethernet ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.roseta ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.drop ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.cargador ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.poe ? <span className="checkmark">✓</span> : '-'}</td>
-                  <td>{r.bateria ? <span className="checkmark">✓</span> : '-'}</td>
+                  {/* Materiales devueltos - Mostrar cantidad y modelo */}
+                  <td>
+                    {r.onu_rip > 0 ? (
+                      <div>
+                        <strong>{r.onu_rip}</strong>
+                        {r.onu_rip_modelo && <div className="small text-muted">{r.onu_rip_modelo}</div>}
+                      </div>
+                    ) : '-'}
+                  </td>
+                  <td>
+                    {r.modem_funcional > 0 ? (
+                      <div>
+                        <strong>{r.modem_funcional}</strong>
+                        {r.modem_funcional_modelo && <div className="small text-muted">{r.modem_funcional_modelo}</div>}
+                      </div>
+                    ) : '-'}
+                  </td>
+                  <td>
+                    {r.modem_rip > 0 ? (
+                      <div>
+                        <strong>{r.modem_rip}</strong>
+                        {r.modem_rip_modelo && <div className="small text-muted">{r.modem_rip_modelo}</div>}
+                      </div>
+                    ) : '-'}
+                  </td>
+                  <td>{r.cable_ethernet > 0 ? <strong>{r.cable_ethernet}</strong> : '-'}</td>
+                  <td>{r.roseta > 0 ? <strong>{r.roseta}</strong> : '-'}</td>
+                  <td>{r.drop > 0 ? <strong>{r.drop}</strong> : '-'}</td>
+                  <td>{r.cargador > 0 ? <strong>{r.cargador}</strong> : '-'}</td>
+                  <td>{r.poe > 0 ? <strong>{r.poe}</strong> : '-'}</td>
+                  <td>{r.bateria > 0 ? <strong>{r.bateria}</strong> : '-'}</td>
                   
                   {/* Observaciones y botón de descarga PDF */}
                   <td><em>{r.observaciones || 'Sin observaciones'}</em></td>
@@ -183,7 +201,7 @@ const MaterialTable = () => {
             ) : (
               // Si no hay registros, mostrar mensaje informativo
               <tr>
-                <td colSpan="17" className="empty-state">
+                <td colSpan="16" className="empty-state">
                   📝 No hay registros de devolución disponibles
                 </td>
               </tr>
