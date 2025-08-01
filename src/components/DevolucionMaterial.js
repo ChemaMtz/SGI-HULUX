@@ -20,6 +20,16 @@ const initialState = {
   cargador: 0,
   poe: 0,
   bateria: 0,
+  isbs: 0,
+  radios: 0,
+  nap: 0,
+  hcc: 0,
+  hsc: 0,
+  spliters: 0,
+  ccn: 0,
+  fleje: 0,
+  fibra_24h: 0,
+  preformado: 0,
   observaciones: '',
 };
 
@@ -143,6 +153,16 @@ const DevolucionMaterial = () => {
     { name: 'cargador', label: 'Cargador', icon: '🔋', requiereModelo: false },
     { name: 'poe', label: 'POE', icon: '⚡', requiereModelo: false },
     { name: 'bateria', label: 'Batería', icon: '🔋', requiereModelo: false },
+    { name: 'isbs', label: 'ISBS', icon: '📺', requiereModelo: false },
+    { name: 'radios', label: 'RADIOS', icon: '📻', requiereModelo: false },
+    { name: 'nap', label: 'NAP', icon: '🏠', requiereModelo: false },
+    { name: 'hcc', label: 'H.C.C.', icon: '🔗', requiereModelo: false },
+    { name: 'hsc', label: 'H.S.C', icon: '🔗', requiereModelo: false },
+    { name: 'spliters', label: 'SPLITERS', icon: '🔀', requiereModelo: false },
+    { name: 'ccn', label: 'C.C.N', icon: '🔧', requiereModelo: false },
+    { name: 'fleje', label: 'FLEJE', icon: '📎', requiereModelo: false },
+    { name: 'fibra_24h', label: 'FIBRA DE 24 H', icon: '🌐', requiereModelo: false },
+    { name: 'preformado', label: 'PREFORMADO', icon: '🔩', requiereModelo: false },
   ];
 
   return (

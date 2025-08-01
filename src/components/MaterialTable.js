@@ -71,6 +71,16 @@ const MaterialTable = () => {
       ['Cargador', r.cargador > 0 ? `${r.cargador} unidades` : '0'],
       ['POE', r.poe > 0 ? `${r.poe} unidades` : '0'],
       ['Batería', r.bateria > 0 ? `${r.bateria} unidades` : '0'],
+      ['ISBS', r.isbs > 0 ? `${r.isbs} unidades` : '0'],
+      ['RADIOS', r.radios > 0 ? `${r.radios} unidades` : '0'],
+      ['NAP', r.nap > 0 ? `${r.nap} unidades` : '0'],
+      ['H.C.C.', r.hcc > 0 ? `${r.hcc} unidades` : '0'],
+      ['H.S.C', r.hsc > 0 ? `${r.hsc} unidades` : '0'],
+      ['SPLITERS', r.spliters > 0 ? `${r.spliters} unidades` : '0'],
+      ['C.C.N', r.ccn > 0 ? `${r.ccn} unidades` : '0'],
+      ['FLEJE', r.fleje > 0 ? `${r.fleje} unidades` : '0'],
+      ['FIBRA DE 24 H', r.fibra_24h > 0 ? `${r.fibra_24h} unidades` : '0'],
+      ['PREFORMADO', r.preformado > 0 ? `${r.preformado} unidades` : '0'],
       ['Observaciones', r.observaciones || 'Sin observaciones'],
       ['Creado por', r.creadoPor ? `${r.creadoPor.nombreCompleto} (${r.creadoPor.email})` : 'Sin información'],
       ['Fecha de creación', r.creadoPor && r.creadoPor.fechaCreacion ? 
@@ -114,6 +124,16 @@ const MaterialTable = () => {
               <th>Cargador</th>
               <th>POE</th>
               <th>Batería</th>
+              <th>ISBS</th>
+              <th>RADIOS</th>
+              <th>NAP</th>
+              <th>H.C.C.</th>
+              <th>H.S.C</th>
+              <th>SPLITERS</th>
+              <th>C.C.N</th>
+              <th>FLEJE</th>
+              <th>FIBRA 24H</th>
+              <th>PREFORMADO</th>
               <th>Observaciones</th>
               <th>Creado Por</th>
               <th>PDF</th>
@@ -169,6 +189,16 @@ const MaterialTable = () => {
                   <td>{r.cargador > 0 ? <strong>{r.cargador}</strong> : '-'}</td>
                   <td>{r.poe > 0 ? <strong>{r.poe}</strong> : '-'}</td>
                   <td>{r.bateria > 0 ? <strong>{r.bateria}</strong> : '-'}</td>
+                  <td>{r.isbs > 0 ? <strong>{r.isbs}</strong> : '-'}</td>
+                  <td>{r.radios > 0 ? <strong>{r.radios}</strong> : '-'}</td>
+                  <td>{r.nap > 0 ? <strong>{r.nap}</strong> : '-'}</td>
+                  <td>{r.hcc > 0 ? <strong>{r.hcc}</strong> : '-'}</td>
+                  <td>{r.hsc > 0 ? <strong>{r.hsc}</strong> : '-'}</td>
+                  <td>{r.spliters > 0 ? <strong>{r.spliters}</strong> : '-'}</td>
+                  <td>{r.ccn > 0 ? <strong>{r.ccn}</strong> : '-'}</td>
+                  <td>{r.fleje > 0 ? <strong>{r.fleje}</strong> : '-'}</td>
+                  <td>{r.fibra_24h > 0 ? <strong>{r.fibra_24h}</strong> : '-'}</td>
+                  <td>{r.preformado > 0 ? <strong>{r.preformado}</strong> : '-'}</td>
                   
                   {/* Observaciones y botón de descarga PDF */}
                   <td><em>{r.observaciones || 'Sin observaciones'}</em></td>
@@ -201,7 +231,7 @@ const MaterialTable = () => {
             ) : (
               // Si no hay registros, mostrar mensaje informativo
               <tr>
-                <td colSpan="16" className="empty-state">
+                <td colSpan="26" className="empty-state">
                   📝 No hay registros de devolución disponibles
                 </td>
               </tr>
