@@ -227,7 +227,7 @@ const Login = ({ user, onLogin, onLogout }) => {
 
               {/* Campo de nombre completo - solo visible en modo registro */}
               {isRegister && (
-                <div className="mb-3 register-field">
+                <div className="mb-3 register-field" key="fullname-field">
                   <input
                     type="text"
                     className="form-control"
@@ -235,7 +235,7 @@ const Login = ({ user, onLogin, onLogout }) => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
-                    minLength="2"
+                    minLength={2}
                   />
                 </div>
               )}
@@ -261,28 +261,45 @@ const Login = ({ user, onLogin, onLogout }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={isRegister ? "6" : undefined}
+                  minLength={isRegister ? 6 : undefined}
                 />
               </div>
 
               {/* Botón principal de submit con estado de carga */}
-              <button type="submit" className="btn btn-primary w-100 rounded-pill mb-3" disabled={isLoading}>
-                {isLoading ? 'Cargando...' : (
-                  <>
-                    {isRegister ? <FaUserPlus className="me-2" /> : <FaSignInAlt className="me-2" />}
-                    {isRegister ? 'Registrarse' : 'Iniciar sesión'}
-                  </>
+              <button 
+                type="submit" 
+                className="btn btn-primary w-100 rounded-pill mb-3" 
+                disabled={isLoading}
+                key="submit-button"
+              >
+                {isLoading ? (
+                  <span key="loading-text">Cargando...</span>
+                ) : (
+                  <span key={isRegister ? "register-content" : "login-content"}>
+                    {isRegister ? (
+                      <>
+                        <FaUserPlus className="me-2" />
+                        Registrarse
+                      </>
+                    ) : (
+                      <>
+                        <FaSignInAlt className="me-2" />
+                        Iniciar sesión
+                      </>
+                    )}
+                  </span>
                 )}
               </button>
 
               {/* Toggle entre login y registro */}
-              <div className="text-center mb-3">
-                <small>
+              <div className="text-center mb-3" key="toggle-section">
+                <small key={isRegister ? "register-prompt" : "login-prompt"}>
                   {isRegister ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}
                   <button
                     type="button"
                     className="btn btn-link btn-toggle p-0 ms-2"
                     onClick={toggleMode}
+                    key="toggle-button"
                   >
                     {isRegister ? 'Iniciar sesión' : 'Regístrate'}
                   </button>
@@ -290,7 +307,7 @@ const Login = ({ user, onLogin, onLogout }) => {
               </div>
 
               {/* Sección de autenticación social */}
-              <div className="text-center">
+              <div className="text-center" key="social-auth-section">
                 <small className="text-muted">O ingresa con</small>
                 <div className="d-flex justify-content-center mt-2 gap-3">
                   {/* Botón de Google con logo personalizado */}
@@ -300,6 +317,7 @@ const Login = ({ user, onLogin, onLogout }) => {
                     style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
+                    key="google-login-button"
                   >
                     <img src={GoogleLogo} alt="Google" style={{ width: '20px' }} />
                   </button>
@@ -311,6 +329,7 @@ const Login = ({ user, onLogin, onLogout }) => {
                     style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
                     onClick={handleFacebookLogin}
                     disabled={isLoading}
+                    key="facebook-login-button"
                   >
                     <img src={FacebookLogo} alt="Facebook" style={{ width: '40px' }} />
                   </button>

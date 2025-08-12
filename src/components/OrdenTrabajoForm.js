@@ -28,6 +28,9 @@ import "bootstrap/dist/css/bootstrap.min.css"; // Framework CSS Bootstrap
  * - Validación de campos requeridos
  * - Feedback visual con toast notifications
  */
+// Generador simple de IDs estables para filas dinámicas
+const genMatId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 const OrdenTrabajo = () => {
   // Estado para almacenar todas las órdenes existentes (para numeración automática)
   const [ordenes, setOrdenes] = useState([]);
@@ -54,7 +57,7 @@ const OrdenTrabajo = () => {
     },
     
     // Array dinámico para gestionar materiales
-    materiales: [{ cantidad: "", descripcion: "" }], // Inicia con una fila
+  materiales: [{ id: genMatId(), cantidad: "", descripcion: "" }], // Inicia con una fila
     
     // Campos de información de personal y recursos
     conduce: "", // Persona que conduce
@@ -156,7 +159,7 @@ const OrdenTrabajo = () => {
   const addMaterialRow = () => {
     setFormData((prev) => ({
       ...prev,
-      materiales: [...prev.materiales, { cantidad: "", descripcion: "" }],
+      materiales: [...prev.materiales, { id: genMatId(), cantidad: "", descripcion: "" }],
     }));
   };
 
@@ -256,7 +259,7 @@ const OrdenTrabajo = () => {
           Otros: false,
           OtrosTexto: "",
         },
-        materiales: [{ cantidad: "", descripcion: "" }],
+  materiales: [{ id: genMatId(), cantidad: "", descripcion: "" }],
         conduce: "",
         unidad: "",
         auxiliares: "",
@@ -397,7 +400,7 @@ const OrdenTrabajo = () => {
                 <tbody>
                   {/* Renderizar filas dinámicamente basadas en el array de materiales */}
                   {formData.materiales.map((mat, i) => (
-                    <tr key={i}>
+                    <tr key={mat.id || i}>
                       <td>
                         <input
                           type="text"

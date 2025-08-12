@@ -28,49 +28,53 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
 
   // Efecto para inicializar el SignaturePad y configurar responsive behavior
   useEffect(() => {
-    if (canvasRef.current) {
-      // Crear instancia de SignaturePad con configuración personalizada
-      signaturePad.current = new SignaturePad(canvasRef.current, {
-        penColor: '#2c3e50', // Color corporativo para la tinta
-        backgroundColor: 'rgba(255,255,255,0)', // Fondo transparente
-        minWidth: 1, // Grosor mínimo de línea
-        maxWidth: 3, // Grosor máximo de línea
-        velocityFilterWeight: 0.7, // Suavizado de líneas
-        throttle: 16 // Optimización de rendimiento (60fps)
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Evitar doble inicialización en StrictMode (fase de montaje/desmontaje inmediato)
+    if (!signaturePad.current) {
+      signaturePad.current = new SignaturePad(canvas, {
+        penColor: '#2c3e50',
+        backgroundColor: 'rgba(255,255,255,0)',
+        minWidth: 1,
+        maxWidth: 3,
+        velocityFilterWeight: 0.7,
+        throttle: 16,
       });
-      
-      /**
-       * Función para ajustar el canvas a dispositivos con alta densidad de píxeles
-       * 
-       * Necesario para que las firmas se vean nítidas en pantallas Retina
-       * y otros dispositivos de alta resolución
-       */
-      const resizeCanvas = () => {
-        const canvas = canvasRef.current;
-        const ratio = Math.max(window.devicePixelRatio || 1, 1); // Obtener ratio de píxeles
-        
-        // Ajustar dimensiones internas del canvas
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        
-        // Escalar el contexto para mantener la proporción
-        canvas.getContext('2d').scale(ratio, ratio);
-        
-        // Limpiar el canvas después del resize para evitar distorsiones
-        signaturePad.current.clear();
-      };
-
-      // Aplicar configuración inicial
-      resizeCanvas();
-      
-      // Listener para redimensionamiento de ventana
-      window.addEventListener('resize', resizeCanvas);
-
-      // Cleanup: remover listener al desmontar el componente
-      return () => {
-        window.removeEventListener('resize', resizeCanvas);
-      };
     }
+
+    // Ajustar el canvas para pantallas Retina / alta densidad
+    const resizeCanvas = () => {
+      const c = canvasRef.current;
+      if (!c) return;
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      // Guardar el contenido actual si fuese necesario en el futuro
+      c.width = c.offsetWidth * ratio;
+      c.height = c.offsetHeight * ratio;
+      const ctx = c.getContext('2d');
+      if (ctx) ctx.scale(ratio, ratio);
+      if (signaturePad.current) signaturePad.current.clear();
+    };
+
+    // Aplicar configuración inicial y listener de resize
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Cleanup robusto: quitar listener y destruir instancia para evitar fugas
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      if (signaturePad.current) {
+        try {
+          // Desvincular eventos internos de la librería
+          if (typeof signaturePad.current.off === 'function') {
+            signaturePad.current.off();
+          }
+        } catch (_) {
+          // Ignorar errores en cleanup defensivo
+        }
+        signaturePad.current = null;
+      }
+    };
   }, []);
 
   /**

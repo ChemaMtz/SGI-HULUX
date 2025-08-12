@@ -36,7 +36,11 @@ body {
 .navbar {
   background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%) !important;
   -webkit-backdrop-filter: blur(10px);
+  -moz-backdrop-filter: blur(10px);
+  -ms-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+  /* Fallback for browsers that don't support backdrop-filter */
+  background-color: rgba(44, 62, 80, 0.95) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   padding: 1rem 0;
   font-family: 'Poppins', sans-serif;
@@ -620,9 +624,18 @@ body {
 }
 
 .signature-buttons {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -ms-flex-pack: center;
   justify-content: center;
   gap: 0.8rem;
+  -webkit-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
 }
 

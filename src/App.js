@@ -87,7 +87,12 @@ const AppContent = () => {
 // Componente App principal que envuelve todo en el Router
 function App() {
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <AppContent />
     </Router>
   );
