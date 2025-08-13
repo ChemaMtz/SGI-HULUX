@@ -2,16 +2,19 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
+// Configuración temporal con valores directos para debugging
 const firebaseConfig = {
-  apiKey: "AIzaSyDBvgB2hXAidJ0QkDz0iGo1gAVWfbWHM0k",
-  authDomain: "huluxsgi.firebaseapp.com",
-  databaseURL: "https://huluxsgi-default-rtdb.firebaseio.com",
-  projectId: "huluxsgi",
-  storageBucket: "huluxsgi.firebasestorage.app",
-  messagingSenderId: "609299509435",
-  appId: "1:609299509435:web:cef1f7a1cea5cc604ff99e",
-  measurementId: "G-FV8SY6C7XB"
+  apiKey: "AIzaSyDfMBIYYtkoC5dPWZIOac0dOLaiIR7SxYo",
+  authDomain: "hulux-sgo.firebaseapp.com",
+  projectId: "hulux-sgo",
+  storageBucket: "hulux-sgo.firebasestorage.app",
+  messagingSenderId: "622519982104",
+  appId: "1:622519982104:web:4757827787cc1478348b6d",
+  measurementId: "G-BDK2FC4EL2"
 };
+
+// Log para verificar la configuración
+console.log('Firebase Config:', firebaseConfig);
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);

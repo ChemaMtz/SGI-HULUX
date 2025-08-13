@@ -290,17 +290,6 @@ const OrdenTrabajo = () => {
     }
   };
 
-  // Array de destinos disponibles para el selector
-  const destinos = [
-    "Ciudad de México",
-    "Guadalajara",
-    "Monterrey",
-    "Puebla",
-    "Querétaro",
-    "Mérida",
-    "Tijuana",
-  ];
-
   return (
     <div className="page-container">
       <div className="container">
@@ -323,18 +312,15 @@ const OrdenTrabajo = () => {
               </div>
               <div className="col-md-4">
                 <label className="form-label">🎯 Destino</label>
-                <select 
-                  className="form-select" 
+                <input 
+                  className="form-control" 
+                  type="text"
                   name="destino" 
                   value={formData.destino} 
                   onChange={handleInputChange} 
+                  placeholder="Municipio, Localidad"
                   required
-                >
-                  <option value="">Seleccione un destino</option>
-                  {destinos.map((dest, i) => (
-                    <option key={i} value={dest}>{dest}</option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="col-md-4">
                 <div className="info-display">
