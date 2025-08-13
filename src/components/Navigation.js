@@ -42,14 +42,14 @@ const Navigation = ({ user, onLogout }) => {
             {/* Renderizado condicional basado en el estado de autenticación */}
             {!user ? (
               // Si el usuario NO está autenticado, mostrar solo enlace de login
-              <li className="nav-item">
+              <li key="login-nav-item" className="nav-item">
                 <NavLink to="/login" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                   <FaSignInAlt className="me-2" /> Iniciar sesión
                 </NavLink>
               </li>
             ) : (
               // Si el usuario SÍ está autenticado, mostrar menú completo
-              <>
+              <React.Fragment key="authenticated-nav-items">
                 {/* Enlace a página de inicio */}
                 <li className="nav-item">
                   <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -89,7 +89,7 @@ const Navigation = ({ user, onLogout }) => {
                     <FaSignOutAlt className="me-2" /> Cerrar sesión
                   </button>
                 </li>
-              </>
+              </React.Fragment>
             )}
           </ul>
         </div>

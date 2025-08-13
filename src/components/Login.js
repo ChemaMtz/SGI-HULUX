@@ -208,7 +208,7 @@ const Login = ({ user, onLogin, onLogout }) => {
           {/* Renderizado condicional basado en estado de autenticación */}
           {user ? (
             // Si el usuario ya está autenticado, mostrar información y opción de logout
-            <div className="text-center">
+            <div key="user-authenticated" className="text-center">
               <p className="text-muted">Sesión iniciada como <strong>{user.email}</strong></p>
               <button onClick={onLogout} className="btn btn-danger w-100 rounded-pill mt-2">
                 <FaSignOutAlt className="me-2" /> Cerrar sesión
@@ -216,7 +216,7 @@ const Login = ({ user, onLogin, onLogout }) => {
             </div>
           ) : (
             // Si no está autenticado, mostrar formulario de login/registro
-            <form onSubmit={handleSubmit} className="w-100">
+            <form key="login-form" onSubmit={handleSubmit} className="w-100">
               {/* Título dinámico del formulario */}
               <h4 className="text-center mb-4">
                 {isRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}
@@ -277,15 +277,15 @@ const Login = ({ user, onLogin, onLogout }) => {
                 ) : (
                   <span key={isRegister ? "register-content" : "login-content"}>
                     {isRegister ? (
-                      <>
+                      <span key="register-span">
                         <FaUserPlus className="me-2" />
                         Registrarse
-                      </>
+                      </span>
                     ) : (
-                      <>
+                      <span key="login-span">
                         <FaSignInAlt className="me-2" />
                         Iniciar sesión
-                      </>
+                      </span>
                     )}
                   </span>
                 )}

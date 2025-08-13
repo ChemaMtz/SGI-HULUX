@@ -41,7 +41,7 @@ const AppContent = () => {
   return (
     <div className="app-container">
       {/* Mostrar navegación solo en rutas específicas */}
-      {shouldShowNavbar && <Navigation user={user} onLogout={handleLogout} />}
+      {shouldShowNavbar && <Navigation key="main-navigation" user={user} onLogout={handleLogout} />}
       
       <main className="main-content">
         <Routes>
