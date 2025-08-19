@@ -1,39 +1,46 @@
 <div align="center">
 	<h1>SGI-HULUX ®</h1>
-	<p><strong>Sistema de Gestión Integral para Órdenes de Trabajo y Devolución de Materiales</strong></p>
-	<p>React + Firebase (Auth & Firestore) · Firmas digitales · PDF dinámicos · Control administrativo</p>
+	<p><strong>Sistema de Gestión Integral (Órdenes de Trabajo + Devolución de Materiales)</strong></p>
+	<p>React 18 · Firebase (Auth, Firestore, Callable Functions) · Firmas digitales · PDFs profesionales</p>
 </div>
 
 ---
 
-## 🚀 Descripción
-SGI-HULUX es una aplicación web interna para gestionar:
-- Órdenes de trabajo externas/internas con numeración automática
-- Devolución de materiales con control detallado y modelos
-- Firmas digitales en canvas (reviso / autorizo / solicito)
-- Generación de reportes PDF (jsPDF + autotable)
-- Control de acceso (usuarios vs administrador)
+## 🚀 Resumen
+Aplicación interna para:
+1. Registrar Órdenes de Trabajo con numeración secuencial formateada (OT-00001 ...).
+2. Registrar Devoluciones de Material con control de modelos y cantidades.
+3. Capturar firmas (revisó / autorizó / solicitó) y exportar PDFs con branding, encabezado, pie y firmas alineadas horizontalmente.
+4. Filtrar y paginar resultados en tablas con estados de carga y error.
 
-## 🧱 Tecnologías Principales
-- React 18 (Create React App)
-- React Router v6
-- Firebase (Auth + Firestore + Realtime counters vía transacciones)
-- jsPDF & jspdf-autotable
-- signature_pad (captura de firmas)
-- Bootstrap 5 (desde npm, no CDN)
+Estado actual: numeración segura preparada (callable `incrementCounter`), usando fallback transaccional local temporal (reglas abiertas para pruebas). PDFs mejorados en ambos módulos. Validación centralizada. Reglas se deben endurecer antes de producción.
 
-## 📂 Estructura Principal
+## 🧱 Stack
+| Capa | Tecnología |
+|------|------------|
+| UI | React 18 (CRA) + Bootstrap 5 |
+| Routing | React Router v6 |
+| Datos | Firebase Firestore (tiempo real) |
+| Auth | Firebase Authentication |
+| Funciones | Cloud Function callable (contador) *(desplegar para endurecer)* |
+| PDFs | jsPDF + jspdf-autotable (utilidades en `utils/pdf.js`) |
+| Firmas | signature_pad (canvas) |
+| Notificaciones | react-toastify |
+| Tests | Jest + Testing Library |
+
+## 📂 Estructura
 ```
 src/
-	components/    # Componentes reutilizables y funcionales principales
-	pages/         # Wrappers de página para enrutado
-	firebase/      # Configuración de Firebase (usa .env)
-	utils/         # Utilidades (compatibilidad navegador, polyfills)
-	assets/        # Imágenes / logos
+	components/        # Formularios, tablas, navegación, firmas, ErrorBoundary
+	pages/             # Contenedores de vistas (routing)
+	firebase/          # Config + clientes (counters, callable)
+	utils/             # pdf, validation, pagination, browserCompat
+	assets/            # Imágenes (logo, iconos)
+	components/__tests__ # Pruebas iniciales
 ```
 
-## 🔐 Variables de Entorno (.env)
-Crea un archivo `.env` (NO subir a git) basado en `.env.example`:
+## 🔐 Variables de Entorno
+Crear `.env` (no versionar):
 ```
 REACT_APP_FIREBASE_API_KEY=...
 REACT_APP_FIREBASE_AUTH_DOMAIN=...
@@ -43,110 +50,117 @@ REACT_APP_FIREBASE_MESSAGING_SENDER_ID=...
 REACT_APP_FIREBASE_APP_ID=...
 REACT_APP_FIREBASE_MEASUREMENT_ID=...
 ```
+Sugerido incluir `.env.example` para nuevos entornos.
 
-## ▶️ Instalación y Ejecución
+## ▶️ Uso Rápido
 ```bash
 npm install
-npm start       # Desarrollo (http://localhost:3000)
-npm run build   # Producción
+npm start         # http://localhost:3000
+npm test          # pruebas existentes
+npm run build     # build producción
 ```
 
-## 👥 Roles y Acceso
-- Usuario autenticado: acceso a Devoluciones y Órdenes.
-- Administrador (email: `admin@hulux.com`): acceso adicional a Panel con todas las tablas.
-- Rutas protegidas mediante `ProtectedRoute` + verificación en tiempo real.
+## 🧾 Flujo Órdenes
+1. Formulario valida y sanitiza datos (`utils/validation.js`).
+2. Se obtiene número secuencial (callable -> fallback transacción). Se guarda `numero` (formateado OT-00001) + `numeroSecuencial`.
+3. Se almacenan firmas opcionales (base64). 
+4. Tabla lista en tiempo real. Exportación PDF con: encabezado (logo), tabla, firmas horizontales, footer con paginación.
 
-## 🧾 Flujo: Órdenes de Trabajo
-1. Usuario completa formulario (actividades, materiales, recursos).
-2. Se genera número único vía transacción Firestore (`contadores/ordenesTrabajo`).
-3. Se pueden capturar firmas (canvas -> dataURL base64).
-4. Registro persistido junto con metadatos del usuario creador.
-5. Exportación a PDF desde la tabla administrativa.
+## 📦 Flujo Devoluciones
+1. Captura de cantidades (con modelos si aplica). 
+2. Numeración: prefijo configurable (default `ORD-`) con padding.
+3. Validación (modelos obligatorios si cantidad > 0 en equipos clave).
+4. Exportación PDF uniforme con cabecera/pie.
 
-## 📦 Flujo: Devolución de Material
-1. Captura de cantidades + modelos condicionales.
-2. Numeración: `contadores/devolucionesMaterial` (transacción).
-3. Asociación de usuario creador.
-4. Exportación individual a PDF desde tabla.
+## ✍️ Firmas
+- signature_pad en componente reutilizable.
+- Guardado PNG base64 (optimizable a futuro a Cloud Storage). 
+- Layout PDF horizontal de 3 bloques; auto salto de página si no cabe.
 
-## ✍️ Firmas Digitales
-- Implementadas con `signature_pad`.
-- Limpieza y resize seguro (manejo de retina + desmontaje defensivo).
-- Guardadas como dataURL (PNG base64) en Firestore dentro de `firmas`.
+## 📄 PDFs (utilidades `utils/pdf.js`)
+- setDocMeta, addHeader, addFooter, loadImageToBase64, defaultTableTheme.
+- Compresión habilitada (`compress: true`).
+- Firmas escaladas y alineadas; tablas con colores alternos.
 
-## 📄 PDFs
-- Generación dinámica con jsPDF.
-- Tablas autoTable con datos limpiezos y formateados.
-- Inclusión de firmas (al convertir dataURL / imagen base64).
+## 🔍 Tablas
+- Filtrado en memoria (cliente / número / destino / actividades).
+- Paginación configurable (10 / 25 / 50 / Todos).
+- Estados: cargando, error, vacío.
 
-## ♻️ Compatibilidad Navegadores
-- Polyfills y utilidades en `utils/browserCompat.js`.
-- Prefijos CSS y fallbacks (`browser-compatibility.css`).
-- Manejo de clases dinámicas por soporte de features.
+## 🛡️ Seguridad / Reglas
+Actualmente (modo pruebas) reglas muy abiertas o semi‑abiertas para permitir creación mientras la Cloud Function no está desplegada.
 
-## 🛡️ Seguridad / Buenas Prácticas
-- Credenciales Firebase solo vía `.env`.
-- Validación de email admin en cliente (para mayor seguridad agregar reglas Firestore).
-- Transacciones para garantizar numeración única (evita colisiones).
-- ErrorBoundary captura fallos de render (mejora UX en errores críticos).
-
-## 🗄️ Reglas Firestore (Sugerencia Inicial)
-Configura reglas (ejemplo base, ajusta a tus necesidades):
+Reglas temporales recomendadas (pruebas):
 ```javascript
 rules_version = '2';
 service cloud.firestore {
-	match /databases/{database}/documents {
-		function isSignedIn() { return request.auth != null; }
-		function isAdmin() { return request.auth.token.email == 'root@hulux.com'; }
-
-		match /ordenesTrabajo/{docId} {
-			allow read, create: if isSignedIn();
-			allow update, delete: if isAdmin();
-		}
-		match /devolucionesMaterial/{docId} {
-			allow read, create: if isSignedIn();
-			allow update, delete: if isAdmin();
-		}
-		match /contadores/{docId} {
-			allow read: if isSignedIn();
-			allow write: if isSignedIn(); // restringir a cloud functions si escalas
-		}
+	match /databases/{db}/documents {
+		match /{document=**} { allow read, write: if request.auth != null; }
 	}
 }
 ```
 
-## 🧪 Tests (Pendiente de Implementar)
-Ideas:
-- Unit tests para utilidades (browserCompat)
-- Tests de componentes críticos (Login, ProtectedRoute)
-- Snapshot de tablas
-
-## 🛠️ Scripts Disponibles
-```bash
-npm start        # Modo desarrollo
-npm run build    # Compilación producción
-npm test         # (Agregar pruebas futuras)
+Reglas endurecidas objetivo (post‑deploy Cloud Function):
+```javascript
+rules_version = '2';
+service cloud.firestore {
+	match /databases/{db}/documents {
+		function isAuthed(){return request.auth!=null;}
+		match /contadores/{id} { allow read: if isAuthed(); allow write: if false; }
+		match /ordenesTrabajo/{id} {
+			allow read: if isAuthed();
+			allow create: if isAuthed() && request.resource.data.creadoPor.uid==request.auth.uid &&
+				request.resource.data.numero is string && request.resource.data.creadoEn is timestamp;
+			allow update, delete: if false;
+		}
+		match /devolucionesMaterial/{id} {
+			allow read: if isAuthed();
+			allow create: if isAuthed() && request.resource.data.creadoPor.uid==request.auth.uid &&
+				request.resource.data.numero_orden is string && request.resource.data.numeroSecuencial is number &&
+				request.resource.data.creadoEn is timestamp;
+			allow update, delete: if false;
+		}
+	}
+}
 ```
+Checklist para endurecer:
+1. Desplegar Cloud Function `incrementCounter`.
+2. Cambiar reglas de `/contadores` a `allow write: if false;`.
+3. Opcional: validar formato con regex (OT-00001 / ORD-001).
+4. Añadir límites de longitud y rangos numéricos.
 
-## 📈 Futuras Mejoras Sugeridas
-- Exportación masiva de PDFs (zip)
-- Filtro / búsqueda avanzada en tablas
-- Paginación / carga perezosa
-- Integrar almacenamiento de firmas en Cloud Storage
-- Validación adicional servidor (Cloud Functions)
-- Dark mode / tema configurable
-- Auditoría de cambios (logs historial)
+## 🧪 Tests
+Implementado: validación, formularios, tablas (filtro + paginación). 
+Pendiente: pruebas PDF (mock jsPDF), ProtectedRoute, fallback de contador y errores de firma.
+
+## 🧩 Código Destacado
+- `firebase/counters.js`: abstracción numeración con callable + fallback.
+- `utils/validation.js`: sanitización y validaciones.
+- `utils/pdf.js`: branding PDF reutilizable.
+- `components/OrdenTrabajoForm.js` y `DevolucionMaterial.js`: lógica de guardado + toasts.
+
+## 🛠️ Mantenimiento Futuro (roadmap corto)
+- Desplegar Cloud Function y cerrar escritura a `/contadores`.
+- Agregar tests PDF y ProtectedRoute.
+- Exportación CSV / PDF masivo.
+- Cache base64 de logo (performance micro).
+- Modo oscuro y accesibilidad (roles ARIA, contraste).
+
+## ⚠️ Riesgos Temporales
+| Área | Riesgo | Mitigación futura |
+|------|--------|-------------------|
+| Reglas abiertas | Manipulación de datos | Endurecer tras función desplegada |
+| Firmas base64 en Firestore | Crecimiento tamaño documentos | Migrar a Storage y guardar URL |
+| Faltan tests PDF | Regresiones silenciosas | Añadir mocks jsPDF |
 
 ## 🤝 Contribución
-1. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
-2. Commit descriptivo: `git commit -m "feat: agregar filtro en tabla de órdenes"`
-3. Push y PR
+Rama: `feature/<descripcion>` → PR. Mensajes convencionales (feat:, fix:, refactor:, docs: ...).
 
-## 📜 Licencia
-Proyecto interno Hulux ®. Uso restringido. No distribuir sin autorización.
+## 📜 Licencia / Uso
+Uso interno Hulux®. No distribuir externamente.
 
 ## 📩 Soporte
-Para incidencias internas contactar al administrador del sistema / TI.
+TI interno / administrador del sistema. Documenta pasos de error + consola para acelerar resolución.
 
 ---
-_Generado y documentado para facilitar mantenimiento y escalabilidad._
+_Documento actualizado refleja estado actual (PDF mejorado, firmas horizontales, reglas temporales) y próximos pasos para endurecer._

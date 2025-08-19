@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react"; // React hooks para estado y
 import { ToastContainer, toast } from "react-toastify"; // Notificaciones toast
 import "react-toastify/dist/ReactToastify.css"; // Estilos para las notificaciones
 import { db, auth } from "../firebase/firebaseConfig"; // Configuración de Firebase
-import { collection, onSnapshot, runTransaction, doc } from "firebase/firestore"; // Funciones de Firestore
+import { collection, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore"; // Funciones de Firestore
+import { getSafeSequence } from '../firebase/counters';
+import { validateOrdenTrabajo } from '../utils/validation';
 import SignaturePad from "../components/SignaturePad"; // Componente personalizado para firmas
 import "bootstrap/dist/css/bootstrap.min.css"; // Framework CSS Bootstrap
 
@@ -181,69 +183,50 @@ const OrdenTrabajo = () => {
     e.preventDefault();
     
     try {
+      // Validación & sanitización previa
+      const { valid, errors, clean } = validateOrdenTrabajo(formData);
+      if (!valid) {
+        errors.forEach(err => toast.error(err));
+        return; // Detener envío
+      }
       // Procesar actividades: filtrar las seleccionadas y crear array
-      const acts = Object.entries(formData.actividades)
-        .filter(([k, v]) => k !== "otrosTexto" && v) // Excluir campo de texto y falsas
-        .map(([k]) => k); // Obtener solo los nombres
-      
+      const acts = Object.entries(clean.actividades)
+        .filter(([k, v]) => k !== "otrosTexto" && v)
+        .map(([k]) => k);
+
       // Agregar texto personalizado si "Otros" está seleccionado
-      if (formData.actividades.otros && formData.actividades.otrosTexto)
-        acts.push(formData.actividades.otrosTexto);
+      if (clean.actividades.otros && clean.actividades.otrosTexto)
+        acts.push(clean.actividades.otrosTexto);
 
-      // Usar transacción para garantizar numeración única
-      await runTransaction(db, async (transaction) => {
-        // Crear referencia al documento contador
-        const contadorRef = doc(db, 'contadores', 'ordenesTrabajo');
-        
-        try {
-          // Intentar obtener el contador actual
-          const contadorDoc = await transaction.get(contadorRef);
-          
-          let siguienteNumero;
-          if (!contadorDoc.exists()) {
-            // Si no existe el contador, crearlo con valor inicial
-            siguienteNumero = 1;
-            transaction.set(contadorRef, { ultimo: siguienteNumero });
-          } else {
-            // Si existe, incrementar el contador
-            siguienteNumero = contadorDoc.data().ultimo + 1;
-            transaction.update(contadorRef, { ultimo: siguienteNumero });
-          }
+      // Obtener número único vía método seguro (callable + fallback local)
+      const siguienteNumero = await getSafeSequence('ordenesTrabajo');
+      // Formatear número con prefijo y padding (coincidirá con reglas endurecidas si se aplican)
+      const numeroSecuencial = siguienteNumero;
+      const numeroFormateado = `OT-${String(siguienteNumero).padStart(5,'0')}`;
 
-          // Obtener información del usuario actual
-          const usuario = auth.currentUser;
-          const infoUsuario = usuario ? {
-            uid: usuario.uid,
-            email: usuario.email,
-            nombreCompleto: usuario.displayName || usuario.email,
-            fechaCreacion: new Date(),
-          } : {
-            uid: 'anonimo',
-            email: 'no-disponible',
-            nombreCompleto: 'Usuario Anónimo',
-            fechaCreacion: new Date(),
-          };
+      // Usuario
+      const usuario = auth.currentUser;
+      const infoUsuario = usuario ? {
+        uid: usuario.uid,
+        email: usuario.email,
+        nombreCompleto: usuario.displayName || usuario.email,
+      } : {
+        uid: 'anonimo',
+        email: 'no-disponible',
+        nombreCompleto: 'Usuario Anónimo',
+      };
 
-          // Crear referencia para el nuevo documento
-          const nuevaOrdenRef = doc(collection(db, "ordenesTrabajo"));
-          
-          // Guardar la orden con el número garantizado
-          transaction.set(nuevaOrdenRef, {
-            ...formData,
-            actividades: acts, // Array procesado de actividades
-            numero: siguienteNumero, // Número único garantizado
-            creadoPor: infoUsuario, // Información del usuario que creó la orden
-          });
-
-          return siguienteNumero;
-        } catch (error) {
-          console.error("Error en transacción:", error);
-          throw error;
-        }
+      await addDoc(collection(db, 'ordenesTrabajo'), {
+        ...clean,
+        actividades: acts,
+        numero: numeroFormateado,      // Número legible / formateado
+        numeroSecuencial,              // Número puro para ordenación si se requiere
+        creadoPor: infoUsuario,
+        creadoEn: serverTimestamp(),
       });
 
       // Feedback de éxito
-      alert("¡Orden guardada exitosamente!");
+  toast.success("Orden guardada exitosamente");
       
       // Resetear formulario a estado inicial
       setFormData({
@@ -281,11 +264,11 @@ const OrdenTrabajo = () => {
       console.error("Error completo:", err);
       
       if (err.code === 'aborted') {
-        alert("Error: La transacción fue cancelada. Por favor, intente nuevamente.");
+  toast.error("Transacción cancelada. Intenta nuevamente.");
       } else if (err.code === 'unavailable') {
-        alert("Error: Servicio no disponible. Verifique su conexión a internet.");
+  toast.error("Servicio no disponible. Revisa tu conexión.");
       } else {
-        alert("Error al guardar la orden: " + err.message);
+  toast.error("Error al guardar: " + err.message);
       }
     }
   };

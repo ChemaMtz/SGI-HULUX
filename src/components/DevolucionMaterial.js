@@ -1,7 +1,11 @@
 // Importaciones necesarias: React, Firebase Firestore
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, runTransaction, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getSafeFormattedSequence } from '../firebase/counters';
+import { validateDevolucion } from '../utils/validation';
 
 // Estado inicial del formulario de devolución
 const initialState = {
@@ -71,61 +75,36 @@ const DevolucionMaterial = () => {
     setMsg('');
 
     try {
-      // Usar transacción para garantizar numeración única
-      const numeroOrden = await runTransaction(db, async (transaction) => {
-        // Crear referencia al documento contador
-        const contadorRef = doc(db, 'contadores', 'devolucionesMaterial');
-        
-        try {
-          // Intentar obtener el contador actual
-          const contadorDoc = await transaction.get(contadorRef);
-          
-          let siguienteNumero;
-          if (!contadorDoc.exists()) {
-            // Si no existe el contador, crearlo con valor inicial
-            siguienteNumero = 1;
-            transaction.set(contadorRef, { ultimo: siguienteNumero });
-          } else {
-            // Si existe, incrementar el contador
-            siguienteNumero = contadorDoc.data().ultimo + 1;
-            transaction.update(contadorRef, { ultimo: siguienteNumero });
-          }
+      // Validar y sanitizar antes de generar número (evita huecos si falla)
+      const { valid, errors, clean } = validateDevolucion(form);
+      if (!valid) {
+        setMsg(errors.join('\n'));
+        return;
+      }
+      // Obtener número formateado centralizado
+  const { idFormateado: numeroOrden, numero } = await getSafeFormattedSequence('devolucionesMaterial', { prefijo: 'ORD-', padding: 3 });
 
-          // Crear número de orden formateado
-          const numeroOrdenFormateado = `ORD-${String(siguienteNumero).padStart(3, '0')}`;
+      // Info usuario (solo lectura)
+      const usuario = auth.currentUser;
+      const infoUsuario = usuario ? {
+        uid: usuario.uid,
+        email: usuario.email,
+        nombreCompleto: usuario.displayName || usuario.email,
+      } : {
+        uid: 'anonimo',
+        email: 'no-disponible',
+        nombreCompleto: 'Usuario Anónimo',
+      };
 
-          // Obtener información del usuario actual
-          const usuario = auth.currentUser;
-          const infoUsuario = usuario ? {
-            uid: usuario.uid,
-            email: usuario.email,
-            nombreCompleto: usuario.displayName || usuario.email,
-            fechaCreacion: new Date(),
-          } : {
-            uid: 'anonimo',
-            email: 'no-disponible',
-            nombreCompleto: 'Usuario Anónimo',
-            fechaCreacion: new Date(),
-          };
-
-          // Crear referencia para el nuevo documento
-          const nuevaDevolucionRef = doc(collection(db, 'devolucionesMaterial'));
-          
-          // Guardar la devolución con el número garantizado
-          transaction.set(nuevaDevolucionRef, {
-            ...form,
-            numero_orden: numeroOrdenFormateado,
-            creadoPor: infoUsuario, // Información del usuario que creó la devolución
-          });
-
-          return numeroOrdenFormateado;
-        } catch (error) {
-          console.error("Error en transacción:", error);
-          throw error;
-        }
+      await addDoc(collection(db, 'devolucionesMaterial'), {
+        ...clean,
+        numeroSecuencial: numero,
+        numero_orden: numeroOrden,
+        creadoPor: infoUsuario,
+        creadoEn: serverTimestamp(),
       });
 
-      alert(`¡Orden guardada correctamente: ${numeroOrden}!`);
+  toast.success(`Devolución guardada: ${numeroOrden}`);
       setMsg('Registro guardado exitosamente');
       setForm(initialState); // Resetear formulario
       
@@ -133,11 +112,11 @@ const DevolucionMaterial = () => {
       console.error("Error completo:", err);
       
       if (err.code === 'aborted') {
-        setMsg('Error: La transacción fue cancelada. Por favor, intente nuevamente.');
+  setMsg('Transacción cancelada. Intenta nuevamente.'); toast.error('Transacción cancelada');
       } else if (err.code === 'unavailable') {
-        setMsg('Error: Servicio no disponible. Verifique su conexión a internet.');
+  setMsg('Servicio no disponible. Revisa tu conexión.'); toast.error('Servicio no disponible');
       } else {
-        setMsg(`Error al guardar: ${err.message}`);
+  setMsg(`Error al guardar: ${err.message}`); toast.error('Error al guardar');
       }
     }
   };
@@ -292,6 +271,7 @@ const DevolucionMaterial = () => {
               {msg}
             </div>
           )}
+          <ToastContainer position="top-right" autoClose={2000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         </div>
       </div>
     </div>

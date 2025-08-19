@@ -1,9 +1,12 @@
 // Importaciones necesarias para el componente
-import React, { useEffect, useState } from 'react'; // React hooks para estado y efectos
+import React, { useEffect, useState, useMemo } from 'react'; // React hooks para estado y efectos
+import { paginate, getTotalPages, clampPage } from '../utils/pagination';
 import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
 import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para escuchar cambios en tiempo real
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
+import logo from '../assets/logo.png';
+import { loadImageToBase64, setDocMeta, addHeader, addFooter, defaultTableTheme } from '../utils/pdf';
 import '../App.css'; // Importar estilos
 
 /**
@@ -23,14 +26,51 @@ import '../App.css'; // Importar estilos
 const MaterialTable = () => {
   // Estado para almacenar todos los registros de devolución
   const [registros, setRegistros] = useState([]);
+  const [loading, setLoading] = useState(true); // Estado de carga inicial
+  const [error, setError] = useState(null); // Estado de error
+  const [busqueda, setBusqueda] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10,25,50,'all'
+
+  // Filtrado memoizado por cliente o número de orden
+  const registrosFiltrados = useMemo(() => {
+    const term = busqueda.trim().toLowerCase();
+    if (!term) return registros;
+    return registros.filter(r =>
+      (r.cliente || '').toLowerCase().includes(term) ||
+      (r.numero_orden || '').toLowerCase().includes(term)
+    );
+  }, [registros, busqueda]);
+
+  const registrosOrdenados = useMemo(() => {
+    return [...registrosFiltrados].sort((a, b) => {
+      const numA = parseInt((a.numero_orden || '').replace(/\D/g, '')) || 0;
+      const numB = parseInt((b.numero_orden || '').replace(/\D/g, '')) || 0;
+      return numA - numB;
+    });
+  }, [registrosFiltrados]);
+
+  const totalPages = useMemo(() => getTotalPages(registrosOrdenados.length, pageSize === 'all' ? 'all' : pageSize), [registrosOrdenados.length, pageSize]);
+
+  useEffect(() => { setPage(p => clampPage(p, totalPages)); }, [totalPages]);
+
+  const registrosPagina = useMemo(() => paginate(registrosOrdenados, page, pageSize === 'all' ? 'all' : pageSize), [registrosOrdenados, page, pageSize]);
 
   // Efecto para escuchar cambios en tiempo real desde Firebase
   useEffect(() => {
     // Configurar listener para la colección 'devolucionesMaterial'
-    const unsub = onSnapshot(collection(db, 'devolucionesMaterial'), (snapshot) => {
-      // Actualizar estado con los documentos obtenidos, incluyendo el ID
-      setRegistros(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsub = onSnapshot(
+      collection(db, 'devolucionesMaterial'),
+      (snapshot) => {
+        setRegistros(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error escuchando devolucionesMaterial:', err);
+        setError(err);
+        setLoading(false);
+      }
+    );
     
     // Cleanup: cancelar la suscripción cuando el componente se desmonte
     return () => unsub();
@@ -47,16 +87,12 @@ const MaterialTable = () => {
    * - Formato profesional con autoTable
    * - Nombre de archivo basado en cliente y número de orden
    */
-  const generarPDF = (r) => {
-    // Crear nuevo documento PDF
-    const doc = new jsPDF();
-    
-    // Configurar título del documento
-    doc.setFontSize(16);
-    doc.text('Devolución de Material', 14, 20);
+  const generarPDF = async (r) => {
+    const doc = new jsPDF({ compress: true, unit: 'mm', format: 'a4' });
+    setDocMeta(doc, { title: `Devolucion_${r.numero_orden || ''}`, subject: 'Devolución de Material' });
+    const logoBase64 = await loadImageToBase64(logo);
+    addHeader(doc, 'Devolución de Material', logoBase64);
 
-    // Preparar datos para la tabla PDF
-    // Cada elemento es un array con [etiqueta, valor]
     const datos = [
       ['Número de Orden', r.numero_orden || '-'],
       ['Fecha', r.fecha || '-'],
@@ -86,16 +122,13 @@ const MaterialTable = () => {
       ['Fecha de creación', r.creadoPor && r.creadoPor.fechaCreacion ? 
         (r.creadoPor.fechaCreacion.toDate ? r.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : r.creadoPor.fechaCreacion.toString()) : 'N/A'],
     ];
-
-    // Generar tabla automática en el PDF
     autoTable(doc, {
-      startY: 30, // Posición Y donde comienza la tabla
-      head: [['Campo', 'Valor']], // Encabezados de la tabla
-      body: datos, // Datos de la tabla
+      startY: 25,
+      head: [['Campo', 'Valor']],
+      body: datos,
+      ...defaultTableTheme,
     });
-
-    // Generar nombre de archivo dinámico
-    // Reemplazar espacios por guiones bajos para compatibilidad
+    addFooter(doc);
     const nombre = r.cliente?.replaceAll(' ', '_') || 'registro';
     doc.save(`Devolucion_${r.numero_orden || nombre}.pdf`);
   };
@@ -141,15 +174,16 @@ const MaterialTable = () => {
           </thead>
           {/* Cuerpo de la tabla con datos dinámicos */}
           <tbody>
-            {registros.length > 0 ? (
-              // Si hay registros, ordenarlos y mostrarlos
-              [...registros].sort((a, b) => {
-                // Algoritmo de ordenamiento por número de orden
-                // Extraer solo los números, ignorando prefijos como 'ORD-'
-                const numA = parseInt((a.numero_orden || '').replace(/\D/g, '')) || 0;
-                const numB = parseInt((b.numero_orden || '').replace(/\D/g, '')) || 0;
-                return numA - numB; // Orden ascendente
-              }).map(r => (
+            {loading ? (
+              <tr>
+                <td colSpan="26" className="empty-state" aria-busy="true">⏳ Cargando registros...</td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="26" className="empty-state text-danger">⚠️ Error cargando datos: {error.message || 'Desconocido'}</td>
+              </tr>
+            ) : registrosPagina.length > 0 ? (
+              registrosPagina.map(r => (
                 // Renderizar cada registro como una fila
                 <tr key={r.id}>
                   {/* Información básica del registro */}
@@ -232,12 +266,51 @@ const MaterialTable = () => {
               // Si no hay registros, mostrar mensaje informativo
               <tr>
                 <td colSpan="26" className="empty-state">
-                  📝 No hay registros de devolución disponibles
+                  📝 No hay registros que coincidan con la búsqueda
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+      </div>
+      {/* Barra de búsqueda */}
+      <div className="mt-3">
+        <input
+          type="search"
+          className="form-control"
+          placeholder="Filtrar por cliente o # orden..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          aria-label="Filtrar registros"
+        />
+      </div>
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-3">
+        <div className="d-flex align-items-center gap-2">
+          <label className="form-label m-0" htmlFor="pageSizeRegistros">Filas:</label>
+          <select
+            id="pageSizeRegistros"
+            className="form-select"
+            style={{ width: 'auto' }}
+            value={pageSize}
+            onChange={e => { const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value,10); setPageSize(val); setPage(1); }}
+            aria-label="Tamaño de página"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value="all">Todos</option>
+          </select>
+          <span className="text-muted small">{registrosFiltrados.length} registros</span>
+        </div>
+        {pageSize !== 'all' && totalPages > 1 && (
+          <nav aria-label="Paginación devoluciones" className="d-flex align-items-center gap-2">
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === 1} onClick={() => setPage(1)} aria-label="Primera página">«</button>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} aria-label="Página anterior">‹</button>
+            <span className="small">Página {page} / {totalPages}</span>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} aria-label="Página siguiente">›</button>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(totalPages)} aria-label="Última página">»</button>
+          </nav>
+        )}
       </div>
     </div>
   );

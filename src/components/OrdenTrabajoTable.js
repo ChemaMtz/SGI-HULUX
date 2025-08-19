@@ -1,9 +1,12 @@
 // Importaciones necesarias para el componente de tabla de órdenes de trabajo
-import React, { useEffect, useState } from 'react'; // React hooks para estado y efectos
+import React, { useEffect, useState, useMemo } from 'react'; // React hooks para estado y efectos
+import { paginate, getTotalPages, clampPage } from '../utils/pagination';
 import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
 import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para tiempo real
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
+import logo from '../assets/logo.png';
+import { loadImageToBase64, setDocMeta, addHeader, addFooter, defaultTableTheme } from '../utils/pdf';
 import '../App.css'; // Importar estilos
 
 /**
@@ -30,14 +33,56 @@ import '../App.css'; // Importar estilos
 const OrdenTrabajoTable = () => {
   // Estado para almacenar todas las órdenes de trabajo
   const [ordenes, setOrdenes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filtro, setFiltro] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const ordenesFiltradas = useMemo(() => {
+    const t = filtro.trim().toLowerCase();
+    if (!t) return ordenes;
+    return ordenes.filter(o =>
+      String(o.numero || '').toLowerCase().includes(t) ||
+      (o.destino || '').toLowerCase().includes(t) ||
+      (Array.isArray(o.actividades) ? o.actividades.join(' ').toLowerCase() : '').includes(t)
+    );
+  }, [ordenes, filtro]);
+
+  const ordenesOrdenadas = useMemo(() => {
+    const extractNum = (v) => {
+      if (typeof v === 'number') return v;
+      const digits = String(v || '').replace(/\D/g, '');
+      return parseInt(digits, 10) || 0;
+    };
+    return [...ordenesFiltradas].sort((a, b) => {
+      const numA = extractNum(a.numeroSecuencial || a.numero || a.numero_orden);
+      const numB = extractNum(b.numeroSecuencial || b.numero || b.numero_orden);
+      return numA - numB;
+    });
+  }, [ordenesFiltradas]);
+
+  const totalPages = useMemo(() => getTotalPages(ordenesOrdenadas.length, pageSize === 'all' ? 'all' : pageSize), [ordenesOrdenadas.length, pageSize]);
+
+  useEffect(() => { setPage(p => clampPage(p, totalPages)); }, [totalPages]);
+
+  const ordenesPagina = useMemo(() => paginate(ordenesOrdenadas, page, pageSize === 'all' ? 'all' : pageSize), [ordenesOrdenadas, page, pageSize]);
 
   // Efecto para escuchar cambios en tiempo real desde Firebase
   useEffect(() => {
     // Configurar listener para la colección 'ordenesTrabajo'
-    const unsub = onSnapshot(collection(db, 'ordenesTrabajo'), (snapshot) => {
-      // Actualizar estado con los documentos obtenidos, incluyendo el ID
-      setOrdenes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsub = onSnapshot(
+      collection(db, 'ordenesTrabajo'),
+      (snapshot) => {
+        setOrdenes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error escuchando ordenesTrabajo:', err);
+        setError(err);
+        setLoading(false);
+      }
+    );
     
     // Cleanup: cancelar la suscripción cuando el componente se desmonte
     return () => unsub();
@@ -90,12 +135,10 @@ const OrdenTrabajoTable = () => {
    * - Descarga automática del archivo
    */
   const generarPDF = async (orden) => {
-    // Crear nuevo documento PDF
-    const doc = new jsPDF();
-    
-    // Configurar título del documento
-    doc.setFontSize(16);
-    doc.text(`Orden de Trabajo #${orden.numero || 'N/A'}`, 14, 20);
+    const doc = new jsPDF({ compress: true, unit: 'mm', format: 'a4' });
+    setDocMeta(doc, { title: `OrdenTrabajo_${orden.numero || 'N/A'}`, subject: 'Orden de Trabajo' });
+    const logoBase64 = await loadImageToBase64(logo);
+    addHeader(doc, `Orden de Trabajo #${orden.numero || 'N/A'}`, logoBase64);
 
     // Preparar datos de la orden para la tabla principal
     const datosTabla = [
@@ -110,51 +153,89 @@ const OrdenTrabajoTable = () => {
       ['Actividades', (orden.actividades || []).join(', ') || 'Sin actividades'],
       ['Materiales', (orden.materiales || []).map(m => `${m.cantidad} - ${m.descripcion}`).join('\n') || 'Sin materiales'],
       ['Creado por', orden.creadoPor ? `${orden.creadoPor.nombreCompleto} (${orden.creadoPor.email})` : 'Sin información'],
-      ['Fecha de creación', orden.creadoPor && orden.creadoPor.fechaCreacion ? 
-        (orden.creadoPor.fechaCreacion.toDate ? orden.creadoPor.fechaCreacion.toDate().toLocaleString('es-ES') : orden.creadoPor.fechaCreacion.toString()) : 'N/A'],
+      // Se elimina 'Fecha de creación' para evitar duplicado de fecha solicitado por el usuario
     ];
 
     // Generar tabla principal con autoTable
     autoTable(doc, {
-      startY: 30, // Posición Y donde comienza la tabla
-      head: [['Campo', 'Valor']], // Encabezados
-      body: datosTabla, // Datos
+      startY: 25,
+      head: [['Campo', 'Valor']],
+      body: datosTabla,
+      ...defaultTableTheme,
     });
 
     // Sección de firmas digitales
     const firmas = orden.firmas || {};
-    let yStart = doc.lastAutoTable.finalY + 10; // Posición después de la tabla
+    let yStart = doc.lastAutoTable.finalY + 10;
+    // Si no cabe la sección de firmas mínima en la página actual, crear nueva página
+    const minAlturaFirmas = 60; // altura mínima para el bloque de firmas en formato horizontal
+    if (yStart + minAlturaFirmas > 270) { // margen inferior ~ 290 - footer
+      doc.addPage();
+      yStart = 20;
+    }
+
     doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
     doc.text('Firmas:', 14, yStart);
     yStart += 6;
 
-    // Procesar firmas: convertir URLs a base64 de forma asíncrona
-    const firmasProcesadas = await Promise.all([
+    const firmasDef = [
       { label: 'Revisó', src: firmas.reviso },
       { label: 'Autorizó', src: firmas.autorizo },
-      { label: 'Solicitó', src: firmas.solicito }
-    ].map(async ({ label, src }) => {
-      // Convertir cada firma de URL a base64
-      const base64 = src ? await urlToBase64(src) : null;
-      return { label, base64 };
-    }));
+      { label: 'Solicitó', src: firmas.solicito },
+    ];
 
-    // Agregar cada firma al PDF
-    firmasProcesadas.forEach((firma, index) => {
-      const yPos = yStart + index * 50; // Espaciado vertical entre firmas
-      doc.text(firma.label, 14, yPos); // Etiqueta de la firma
-      
+    // Convertir en paralelo
+    const firmasProcesadas = await Promise.all(firmasDef.map(async f => ({
+      label: f.label,
+      base64: f.src ? await urlToBase64(f.src) : null,
+    })));
+
+    // Layout horizontal
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginX = 14;
+    const usableWidth = pageWidth - marginX * 2;
+    const gap = 6;
+    const blockWidth = (usableWidth - gap * 2) / 3; // 3 bloques
+    const blockHeight = 40; // área para la imagen
+    const lineY = yStart + blockHeight + 10;
+
+    firmasProcesadas.forEach((firma, idx) => {
+      const x = marginX + idx * (blockWidth + gap);
+      // Etiqueta
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(firma.label, x, yStart + 4);
+      // Marco / imagen
       if (firma.base64) {
-        // Si hay firma, agregar imagen al PDF
-        doc.addImage(firma.base64, 'PNG', 14, yPos + 4, 60, 30);
+        // Ajustar imagen preservando proporción dentro de blockWidth x blockHeight
+        try {
+          // jsPDF no expone dimensiones de la imagen antes, usamos aproximación fija
+          const imgW = blockWidth;
+            const imgH = blockHeight;
+          doc.addImage(firma.base64, 'PNG', x, yStart + 6, imgW, imgH, undefined, 'FAST');
+        } catch (_) {
+          doc.setFont('helvetica', 'normal');
+          doc.text('Error firma', x + 2, yStart + 20);
+        }
       } else {
-        // Si no hay firma, mostrar texto alternativo
-        doc.text('Sin firma', 14, yPos + 20);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Sin firma', x + 2, yStart + 20);
       }
+      // Línea de firma
+      doc.setDrawColor(50);
+      doc.line(x, lineY, x + blockWidth, lineY);
     });
 
-    // Descargar el PDF con nombre dinámico
-    doc.save(`OrdenTrabajo_${orden.numero || 'sin_numero'}.pdf`);
+    // Etiquetas debajo de la línea (nombre de campo ya usado como label arriba, opcional repetir)
+    // doc.setFontSize(9);
+    // firmasProcesadas.forEach((firma, idx) => {
+    //   const x = marginX + idx * (blockWidth + gap);
+    //   doc.text(firma.label, x + blockWidth / 2, lineY + 5, { align: 'center' });
+    // });
+
+  addFooter(doc);
+  doc.save(`OrdenTrabajo_${orden.numero || 'sin_numero'}.pdf`);
   };
 
   return (
@@ -186,14 +267,16 @@ const OrdenTrabajoTable = () => {
           
           {/* Cuerpo de la tabla con datos dinámicos */}
           <tbody>
-            {ordenes.length > 0 ? (
-              // Si hay órdenes, ordenarlas y mostrarlas
-              [...ordenes].sort((a, b) => {
-                // Algoritmo de ordenamiento por número de orden
-                const numA = parseInt(a.numero || a.numero_orden || 0);
-                const numB = parseInt(b.numero || b.numero_orden || 0);
-                return numA - numB; // Orden ascendente
-              }).map((o) => (
+            {loading ? (
+              <tr>
+                <td colSpan="13" className="empty-state" aria-busy="true">⏳ Cargando órdenes...</td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="13" className="empty-state text-danger">⚠️ Error cargando datos: {error.message || 'Desconocido'}</td>
+              </tr>
+            ) : ordenesPagina.length > 0 ? (
+              ordenesPagina.map((o) => (
                 // Renderizar cada orden como una fila
                 <tr key={o.id}>
                   {/* Información básica de la orden */}
@@ -259,12 +342,50 @@ const OrdenTrabajoTable = () => {
               // Si no hay órdenes, mostrar mensaje informativo
               <tr>
                 <td colSpan="13" className="empty-state">
-                  📋 No hay órdenes de trabajo registradas
+                  📋 No hay órdenes que coincidan con el filtro
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+      </div>
+      <div className="mt-3">
+        <input
+          type="search"
+          className="form-control"
+          placeholder="Filtrar por número, destino o actividad..."
+          value={filtro}
+          onChange={e => setFiltro(e.target.value)}
+          aria-label="Filtrar órdenes"
+        />
+      </div>
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-3">
+        <div className="d-flex align-items-center gap-2">
+          <label className="form-label m-0" htmlFor="pageSizeOrdenes">Filas:</label>
+          <select
+            id="pageSizeOrdenes"
+            className="form-select"
+            style={{ width: 'auto' }}
+            value={pageSize}
+            onChange={e => { const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value,10); setPageSize(val); setPage(1); }}
+            aria-label="Tamaño de página"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value="all">Todos</option>
+          </select>
+          <span className="text-muted small">{ordenesFiltradas.length} registros</span>
+        </div>
+        {pageSize !== 'all' && totalPages > 1 && (
+          <nav aria-label="Paginación órdenes" className="d-flex align-items-center gap-2">
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === 1} onClick={() => setPage(1)} aria-label="Primera página">«</button>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p-1))} aria-label="Página anterior">‹</button>
+            <span className="small">Página {page} / {totalPages}</span>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p+1))} aria-label="Página siguiente">›</button>
+            <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(totalPages)} aria-label="Última página">»</button>
+          </nav>
+        )}
       </div>
     </div>
   );

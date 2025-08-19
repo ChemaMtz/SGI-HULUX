@@ -13,19 +13,23 @@ const firebaseConfig = {
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
-// Log para verificar que las variables de entorno se están cargando
-console.log('Firebase Config from ENV:', {
-  apiKey: firebaseConfig.apiKey ? 'Loaded ✅' : 'Missing ❌',
-  authDomain: firebaseConfig.authDomain ? 'Loaded ✅' : 'Missing ❌',
-  projectId: firebaseConfig.projectId ? 'Loaded ✅' : 'Missing ❌',
-  storageBucket: firebaseConfig.storageBucket ? 'Loaded ✅' : 'Missing ❌',
-  messagingSenderId: firebaseConfig.messagingSenderId ? 'Loaded ✅' : 'Missing ❌',
-  appId: firebaseConfig.appId ? 'Loaded ✅' : 'Missing ❌',
-  measurementId: firebaseConfig.measurementId ? 'Loaded ✅' : 'Missing ❌'
-});
+// Log sólo en desarrollo para evitar exponer detalles en producción
+if (process.env.NODE_ENV === 'development') {
+  // eslint-disable-next-line no-console
+  console.log('Firebase Config from ENV:', {
+    apiKey: firebaseConfig.apiKey ? 'Loaded ✅' : 'Missing ❌',
+    authDomain: firebaseConfig.authDomain ? 'Loaded ✅' : 'Missing ❌',
+    projectId: firebaseConfig.projectId ? 'Loaded ✅' : 'Missing ❌',
+    storageBucket: firebaseConfig.storageBucket ? 'Loaded ✅' : 'Missing ❌',
+    messagingSenderId: firebaseConfig.messagingSenderId ? 'Loaded ✅' : 'Missing ❌',
+    appId: firebaseConfig.appId ? 'Loaded ✅' : 'Missing ❌',
+    measurementId: firebaseConfig.measurementId ? 'Loaded ✅' : 'Missing ❌'
+  });
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { db, auth };
+// Exportamos también 'app' para inicializar Functions en el cliente
+export { app, db, auth };
