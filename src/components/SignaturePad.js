@@ -1,5 +1,5 @@
 // Importaciones necesarias para el componente de firma digital
-import React, { useRef, useEffect, useState } from 'react'; // React hooks para referencias y efectos
+import React, { useRef, useEffect, useState, useCallback } from 'react'; // React hooks para referencias y efectos
 import SignaturePad from 'signature_pad'; // Librería externa para captura de firmas
 import '../App.css'; // Importar estilos personalizados
 
@@ -27,12 +27,39 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
   const canvasRef = useRef(null); // Referencia al elemento canvas
   const signaturePad = useRef(null); // Referencia a la instancia de SignaturePad
 
-  // Efecto para inicializar el SignaturePad y configurar responsive behavior
+  // Función reutilizable para redimensionar canvas (incluye fullscreen)
+  const resizeCanvas = useCallback(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    // Altura dinámica en fullscreen para aprovechar viewport
+    if (fullscreen) {
+      // Estimar altura disponible (restar botones / header aprox.)
+      const avail = window.innerHeight - 160; // 160px para controles
+      if (avail > 200) c.style.height = avail + 'px';
+    } else {
+      // Altura base adaptable a orientación
+      const isLandscape = window.innerWidth > window.innerHeight;
+      c.style.height = isLandscape ? '220px' : '200px';
+    }
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    // Ajustar atributos width/height (bitmap) acorde al tamaño CSS final
+    const rect = c.getBoundingClientRect();
+    c.width = rect.width * ratio;
+    c.height = rect.height * ratio;
+    const ctx = c.getContext('2d');
+    if (ctx) ctx.scale(ratio, ratio);
+    if (signaturePad.current) {
+      try {
+        signaturePad.current.clear();
+      } catch (_) { /* noop */ }
+    }
+  }, [fullscreen]);
+
+  // Inicialización y listeners globales
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Evitar doble inicialización en StrictMode (fase de montaje/desmontaje inmediato)
     if (!signaturePad.current) {
       signaturePad.current = new SignaturePad(canvas, {
         penColor: '#2c3e50',
@@ -44,39 +71,33 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
       });
     }
 
-    // Ajustar el canvas para pantallas Retina / alta densidad
-    const resizeCanvas = () => {
-      const c = canvasRef.current;
-      if (!c) return;
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      // Guardar el contenido actual si fuese necesario en el futuro
-      c.width = c.offsetWidth * ratio;
-      c.height = c.offsetHeight * ratio;
-      const ctx = c.getContext('2d');
-      if (ctx) ctx.scale(ratio, ratio);
-      if (signaturePad.current) signaturePad.current.clear();
-    };
-
-    // Aplicar configuración inicial y listener de resize
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
 
-    // Cleanup robusto: quitar listener y destruir instancia para evitar fugas
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('orientationchange', resizeCanvas);
       if (signaturePad.current) {
         try {
-          // Desvincular eventos internos de la librería
-          if (typeof signaturePad.current.off === 'function') {
-            signaturePad.current.off();
-          }
-        } catch (_) {
-          // Ignorar errores en cleanup defensivo
-        }
+          if (typeof signaturePad.current.off === 'function') signaturePad.current.off();
+        } catch(_){}
         signaturePad.current = null;
       }
     };
-  }, []);
+  }, [resizeCanvas]);
+
+  // Reajustar al entrar / salir de fullscreen
+  useEffect(() => {
+    // retraso ligero para permitir aplicar clases CSS
+    const t = setTimeout(resizeCanvas, 60);
+    if (fullscreen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+    return () => clearTimeout(t);
+  }, [fullscreen, resizeCanvas]);
 
   /**
    * Manejador para guardar la firma
@@ -108,11 +129,8 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
   return (
     <div className="signature-container">
       <div className="signature-toolbar">
-        {!fullscreen && (
-          <button type="button" className="btn btn-signature-expand" onClick={() => setFullscreen(true)}>
-            ⛶ Ampliar
-          </button>
-        )}
+  {!fullscreen && <button type="button" className="btn btn-signature-expand" onClick={() => setFullscreen(true)}>⛶ Ampliar</button>}
+  {fullscreen && <button type="button" className="btn btn-signature-expand" onClick={() => setFullscreen(false)}>↩ Salir</button>}
       </div>
   <canvas ref={canvasRef} className={`signature-canvas ${fullscreen ? 'signature-fullscreen-active' : ''}`} />
       <div className="signature-buttons">

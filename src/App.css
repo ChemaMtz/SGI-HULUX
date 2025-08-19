@@ -617,6 +617,8 @@ body {
   background: #fff;
   cursor: crosshair;
   transition: border-color 0.3s ease;
+  touch-action: none; /* evita scroll accidental al dibujar */
+  position: relative;
 }
 
 .signature-canvas:hover {
