@@ -1,4 +1,10 @@
-/* Ajustes para tablas y formularios en pantallas pequeñas */
+/* =============================================================
+  Estilos Responsive Específicos (extra pequeños <= 576px)
+  ---------------------------------------------------------
+  - Reduce tipografías y paddings para optimizar espacio
+  - Ajusta tablas para mejor legibilidad en móviles
+  - Minimiza márgenes horizontales de contenedores
+  ============================================================= */
 @media (max-width: 576px) {
   .table, .table th, .table td {
     font-size: 0.85rem;

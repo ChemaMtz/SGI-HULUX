@@ -1,9 +1,14 @@
-// This optional code is used to register a service worker.
-// register() is not called by default.
-
-// Benefits of using a service worker:
-// * Faster loading on slow connections
-// * Better offline experience
+// =============================================================
+// Service Worker (opcional)
+// -------------------------------------------------------------
+// Este archivo mantiene la implementación por defecto de CRA para
+// registrar un Service Worker que permite:
+//  * Carga más rápida (cache-first)
+//  * Funcionalidad offline básica
+//  * Mejora de percepción de rendimiento
+// Por defecto NO se registra automáticamente. Para activarlo, llamar
+// a register() desde el punto de entrada (index.js) bajo tu propio criterio.
+// =============================================================
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
@@ -24,7 +29,7 @@ export function register(config) {
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
       if (isLocalhost) {
-        // This is running on localhost. Let's check if a service worker still exists or not.
+  // Entorno local: validar si el SW existe o debe limpiarse
         checkValidServiceWorker(swUrl, config);
 
         navigator.serviceWorker.ready.then(() => {
@@ -34,7 +39,7 @@ export function register(config) {
           );
         });
       } else {
-        // Is not localhost. Just register service worker
+  // Producción u origen distinto a localhost: registrar directamente
         registerValidSW(swUrl, config);
       }
     });
@@ -53,16 +58,15 @@ function registerValidSW(swUrl, config) {
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              console.log(
-                'New content is available and will be used when all ' +
-                  'tabs for this page are closed. See https://goo.gl/KwvDNy.'
-              );
+              // Nuevo contenido listo: se activará cuando todas las pestañas se cierren
+              console.log('Nuevo contenido disponible (se aplicará al recargar todas las pestañas).');
 
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
             } else {
-              console.log('Content is cached for offline use.');
+              // Primer cache exitoso
+              console.log('Contenido cacheado para uso offline.');
 
               if (config && config.onSuccess) {
                 config.onSuccess(registration);
@@ -73,7 +77,7 @@ function registerValidSW(swUrl, config) {
       };
     })
     .catch(error => {
-      console.error('Error during service worker registration:', error);
+  console.error('Error registrando el service worker:', error);
     });
 }
 
@@ -87,7 +91,7 @@ function checkValidServiceWorker(swUrl, config) {
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
-        navigator.serviceWorker.ready.then(registration => {
+  navigator.serviceWorker.ready.then(registration => {
           registration.unregister().then(() => {
             window.location.reload();
           });
@@ -97,9 +101,7 @@ function checkValidServiceWorker(swUrl, config) {
       }
     })
     .catch(() => {
-      console.log(
-        'No internet connection found. App is running in offline mode.'
-      );
+  console.log('Sin conexión: la aplicación funciona en modo offline (cache).');
     });
 }
 
@@ -110,7 +112,7 @@ export function unregister() {
         registration.unregister();
       })
       .catch(error => {
-        console.error(error.message);
+        console.error('Error al anular el registro del SW:', error.message);
       });
   }
 }
