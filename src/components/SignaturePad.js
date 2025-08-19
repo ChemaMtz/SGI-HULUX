@@ -1,5 +1,5 @@
 // Importaciones necesarias para el componente de firma digital
-import React, { useRef, useEffect } from 'react'; // React hooks para referencias y efectos
+import React, { useRef, useEffect, useState } from 'react'; // React hooks para referencias y efectos
 import SignaturePad from 'signature_pad'; // Librería externa para captura de firmas
 import '../App.css'; // Importar estilos personalizados
 
@@ -22,6 +22,7 @@ import '../App.css'; // Importar estilos personalizados
  * @param {Function} onClear - Callback ejecutado al limpiar la firma
  */
 const SignaturePadComponent = ({ onSave, onClear }) => {
+  const [fullscreen, setFullscreen] = useState(false);
   // Referencias para acceder al canvas y la instancia de SignaturePad
   const canvasRef = useRef(null); // Referencia al elemento canvas
   const signaturePad = useRef(null); // Referencia a la instancia de SignaturePad
@@ -106,32 +107,37 @@ const SignaturePadComponent = ({ onSave, onClear }) => {
 
   return (
     <div className="signature-container">
-      {/* Canvas para captura de firma con estilos modernos */}
-      <canvas
-        ref={canvasRef}
-        className="signature-canvas"
-      />
-      
-      {/* Contenedor de botones con estilos modernos */}
-      <div className="signature-buttons">
-        {/* Botón de guardar con gradiente verde */}
-        <button
-          type="button"
-          onClick={handleSave}
-          className="btn btn-signature-save"
-        >
-          💾 Guardar
-        </button>
-        
-        {/* Botón de limpiar con gradiente rojo */}
-        <button
-          type="button"
-          onClick={handleClear}
-          className="btn btn-signature-clear"
-        >
-          🗑️ Limpiar
-        </button>
+      <div className="signature-toolbar">
+        {!fullscreen && (
+          <button type="button" className="btn btn-signature-expand" onClick={() => setFullscreen(true)}>
+            ⛶ Ampliar
+          </button>
+        )}
       </div>
+  <canvas ref={canvasRef} className={`signature-canvas ${fullscreen ? 'signature-fullscreen-active' : ''}`} />
+      <div className="signature-buttons">
+        <button type="button" onClick={handleSave} className="btn btn-signature-save">💾 Guardar</button>
+        <button type="button" onClick={handleClear} className="btn btn-signature-clear">🗑️ Limpiar</button>
+      </div>
+
+      {fullscreen && (
+        <div className="signature-fullscreen-overlay">
+          <div className="signature-fullscreen-inner">
+            <div className="signature-fullscreen-header">
+              <span>✍️ Firma</span>
+              <button type="button" className="btn btn-sm btn-close-fullscreen" onClick={() => setFullscreen(false)}>✖</button>
+            </div>
+            <div className="signature-fullscreen-wrapper">
+              {/* mismo canvas reposicionado via CSS (absolute) */}
+            </div>
+            <div className="signature-buttons fullscreen">
+              <button type="button" onClick={handleSave} className="btn btn-signature-save">💾 Guardar</button>
+              <button type="button" onClick={handleClear} className="btn btn-signature-clear">🗑️ Limpiar</button>
+              <button type="button" onClick={() => setFullscreen(false)} className="btn btn-secondary btn-signature-close">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

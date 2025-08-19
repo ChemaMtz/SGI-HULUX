@@ -55,7 +55,7 @@ const OrdenTrabajo = () => {
       SoporteTecnico: false,
       RetiroCancelacion: false,
       Otros: false,
-      OtrosTexto: "", // Campo de texto cuando se selecciona "Otros"
+      otrosTexto: "", // Campo de texto cuando se selecciona "Otros" (normalizado en minúscula inicial)
     },
     
     // Array dinámico para gestionar materiales
@@ -195,7 +195,7 @@ const OrdenTrabajo = () => {
         .map(([k]) => k);
 
       // Agregar texto personalizado si "Otros" está seleccionado
-      if (clean.actividades.otros && clean.actividades.otrosTexto)
+      if (clean.actividades.Otros && clean.actividades.otrosTexto)
         acts.push(clean.actividades.otrosTexto);
 
       // Obtener número único vía método seguro (callable + fallback local)
@@ -240,7 +240,7 @@ const OrdenTrabajo = () => {
           SoporteTecnico: false,
           RetiroCancelacion: false,
           Otros: false,
-          OtrosTexto: "",
+          otrosTexto: "",
         },
   materiales: [{ id: genMatId(), cantidad: "", descripcion: "" }],
         conduce: "",
@@ -337,7 +337,7 @@ const OrdenTrabajo = () => {
                 ))}
               </div>
               {/* Campo de texto condicional para "Otros" */}
-              {formData.actividades.otros && (
+              {formData.actividades.Otros && (
                 <div className="mt-3">
                   <input
                     type="text"

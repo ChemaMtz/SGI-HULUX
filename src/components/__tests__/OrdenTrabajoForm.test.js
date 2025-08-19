@@ -2,6 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import OrdenTrabajo from '../OrdenTrabajoForm';
 
+// Mock del componente SignaturePad completo para aislar la prueba del canvas
+// OrdenTrabajoForm lo importa desde "../components/SignaturePad" relativo a src/components/OrdenTrabajoForm.js
+// Desde este test (src/components/__tests__), la ruta correcta es '../SignaturePad'
+jest.mock('../SignaturePad', () => {
+  const React = require('react');
+  return function MockSignaturePad() {
+    return React.createElement('div', { 'data-testid': 'signature-pad-mock' }, 'SignaturePadMock');
+  };
+});
+
 jest.mock('../../firebase/firebaseConfig', () => ({
   db: {},
   auth: { currentUser: { uid: 'u1', email: 'user@test.com' } }
