@@ -845,3 +845,35 @@ body {
   box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
   color: white;
 }
+
+/* --- Revisado styles --- */
+.fila-revisada {
+  background: #e6ffed !important;
+}
+.fila-revisada td {
+  position: relative;
+}
+.fila-revisada td:first-child::before {
+  content: '✔';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1e7e34;
+  font-size: 0.8rem;
+}
+.btn-revisado, .btn-revisado-activo {
+  border: none;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-revisado { background:#f1f3f5; color:#444; }
+.btn-revisado:hover { background:#e4e7ea; }
+.btn-revisado-activo { background:#28a745; color:#fff; box-shadow:0 0 0 2px rgba(40,167,69,0.3); }
+.btn-revisado-activo:hover { background:#218838; }

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react'; // React hooks para estado y efectos
 import { paginate, getTotalPages, clampPage } from '../utils/pagination';
 import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
-import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para tiempo real
+import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore'; // Funciones de Firestore para tiempo real y actualización
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
 import logo from '../assets/logo.png';
@@ -238,6 +238,17 @@ const OrdenTrabajoTable = () => {
   doc.save(`OrdenTrabajo_${orden.numero || 'sin_numero'}.pdf`);
   };
 
+  // Marcar una orden como revisada (o revertir)
+  const toggleRevisado = async (orden) => {
+    try {
+      const ref = doc(db, 'ordenesTrabajo', orden.id);
+      await updateDoc(ref, { revisado: !orden.revisado, fechaRevisado: !orden.revisado ? new Date() : null });
+    } catch (e) {
+      console.error('Error actualizando revisado:', e);
+      alert('No se pudo actualizar el estado de revisado');
+    }
+  };
+
   return (
     <div className="table-container">
       {/* Título principal de la tabla */}
@@ -261,6 +272,7 @@ const OrdenTrabajoTable = () => {
               <th>Uso Efectivo</th>
               <th>Cantidad Efectivo</th>
               <th>Creado Por</th>
+              <th>Revisado</th>
               <th>PDF</th>
             </tr>
           </thead>
@@ -278,7 +290,7 @@ const OrdenTrabajoTable = () => {
             ) : ordenesPagina.length > 0 ? (
               ordenesPagina.map((o) => (
                 // Renderizar cada orden como una fila
-                <tr key={o.id}>
+                <tr key={o.id} className={o.revisado ? 'fila-revisada' : ''}>
                   {/* Información básica de la orden */}
                   <td><strong>{o.numero || 'N/A'}</strong></td>
                   <td>{o.fecha || 'N/A'}</td>
@@ -327,6 +339,16 @@ const OrdenTrabajoTable = () => {
                     )}
                   </td>
                   
+                  {/* Botón Revisado */}
+                  <td>
+                    <button
+                      className={`btn btn-sm ${o.revisado ? 'btn-revisado-activo' : 'btn-revisado'}`}
+                      onClick={() => toggleRevisado(o)}
+                      title={o.revisado ? 'Quitar marca de revisado' : 'Marcar como revisado'}
+                    >
+                      {o.revisado ? '✓ Revisado' : 'Marcar'}
+                    </button>
+                  </td>
                   {/* Botón para generar y descargar PDF */}
                   <td>
                     <button

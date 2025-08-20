@@ -26,6 +26,7 @@ const initialState = {
   bateria: 0,
   isbs: 0,
   radios: 0,
+  radios_modelo: '',
   nap: 0,
   hcc: 0,
   hsc: 0,
@@ -52,6 +53,33 @@ const modelosEquipos = [
   'V2802W-U-AZUL',
   'V2801SG-51 DEV',
   'RWireless-G1',
+  'Wireless-Aguste General',
+  'Pincon Comumunication',
+  'Atw-G',
+  'Nokia',
+  'Arcadia',
+  'Mininodos',
+  'V-sol',
+  'Roseta V-Sol',
+];
+
+// Modelos específicos para radios
+const modelosRadios = [
+  'M2400',
+  'M5300',
+  'M5400',
+  'Foco M516',
+  'Foco m519',
+  'Loko M2',
+  'Loko M5',
+  'AC 2GEN',
+  'Force 200',
+  'CX5',
+  'airFIBER 5X',
+  'airFIBER 3X',
+  'airFIBER 5XHD',
+  'Nano Bridge',
+  'Nano Station',
 ];
 
 // Componente principal para registrar devoluciones de material
@@ -133,7 +161,7 @@ const DevolucionMaterial = () => {
     { name: 'poe', label: 'POE', icon: '⚡', requiereModelo: false },
     { name: 'bateria', label: 'Batería', icon: '🔋', requiereModelo: false },
     { name: 'isbs', label: 'ISBS', icon: '📺', requiereModelo: false },
-    { name: 'radios', label: 'RADIOS', icon: '📻', requiereModelo: false },
+  { name: 'radios', label: 'RADIOS', icon: '📻', requiereModelo: true },
     { name: 'nap', label: 'NAP', icon: '🏠', requiereModelo: false },
     { name: 'hcc', label: 'H.C.C.', icon: '🔗', requiereModelo: false },
     { name: 'hsc', label: 'H.S.C', icon: '🔗', requiereModelo: false },
@@ -223,15 +251,15 @@ const DevolucionMaterial = () => {
                       {/* Selector de modelo condicional */}
                       {material.requiereModelo && form[material.name] > 0 && (
                         <div className="mt-2">
-                          <select 
-                            className="form-select form-select-sm" 
+                          <select
+                            className="form-select form-select-sm"
                             name={`${material.name}_modelo`}
                             value={form[`${material.name}_modelo`] || ''}
                             onChange={handleChange}
                             required={form[material.name] > 0}
                           >
                             <option value="">-- Selecciona modelo --</option>
-                            {modelosEquipos.map((modelo, i) => (
+                            {(material.name === 'radios' ? modelosRadios : modelosEquipos).map((modelo, i) => (
                               <option key={i} value={modelo}>{modelo}</option>
                             ))}
                           </select>

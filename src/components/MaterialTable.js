@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react'; // React hooks para estado y efectos
 import { paginate, getTotalPages, clampPage } from '../utils/pagination';
 import { db } from '../firebase/firebaseConfig'; // Configuración de Firebase
-import { collection, onSnapshot } from 'firebase/firestore'; // Funciones de Firestore para escuchar cambios en tiempo real
+import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore'; // Funciones de Firestore para escuchar cambios y actualizar
 import jsPDF from 'jspdf'; // Librería para generar documentos PDF
 import autoTable from 'jspdf-autotable'; // Plugin para crear tablas automáticamente en PDF
 import logo from '../assets/logo.png';
@@ -133,6 +133,17 @@ const MaterialTable = () => {
     doc.save(`Devolucion_${r.numero_orden || nombre}.pdf`);
   };
 
+  // Marcar un registro como revisado (toggle)
+  const toggleRevisado = async (registro) => {
+    try {
+      const ref = doc(db, 'devolucionesMaterial', registro.id);
+      await updateDoc(ref, { revisado: !registro.revisado, fechaRevisado: !registro.revisado ? new Date() : null });
+    } catch (e) {
+      console.error('Error actualizando revisado:', e);
+      alert('No se pudo actualizar el estado de revisado');
+    }
+  };
+
   return (
     <div className="table-container">
       {/* Título principal de la tabla */}
@@ -169,6 +180,7 @@ const MaterialTable = () => {
               <th>PREFORMADO</th>
               <th>Observaciones</th>
               <th>Creado Por</th>
+              <th>Revisado</th>
               <th>PDF</th>
             </tr>
           </thead>
@@ -185,7 +197,7 @@ const MaterialTable = () => {
             ) : registrosPagina.length > 0 ? (
               registrosPagina.map(r => (
                 // Renderizar cada registro como una fila
-                <tr key={r.id}>
+                <tr key={r.id} className={r.revisado ? 'fila-revisada' : ''}>
                   {/* Información básica del registro */}
                   <td><strong>{r.numero_orden || '-'}</strong></td>
                   <td>{r.fecha || '-'}</td>
@@ -254,6 +266,15 @@ const MaterialTable = () => {
                     )}
                   </td>
                   
+                  <td>
+                    <button
+                      className={`btn btn-sm ${r.revisado ? 'btn-revisado-activo' : 'btn-revisado'}`}
+                      onClick={() => toggleRevisado(r)}
+                      title={r.revisado ? 'Quitar marca de revisado' : 'Marcar como revisado'}
+                    >
+                      {r.revisado ? '✓ Revisado' : 'Marcar'}
+                    </button>
+                  </td>
                   <td>
                     {/* Botón para generar y descargar PDF del registro */}
                     <button className="btn btn-download" onClick={() => generarPDF(r)}>
